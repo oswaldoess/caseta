@@ -1,0 +1,16 @@
+{
+  "name": "@caseta/viviendas",
+  "version": "0.3.0",
+  "private": true,
+  "description": "S2. Viviendas: viviendas y asignación de residentes.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@caseta/shared": "*",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0"
+  }
+}
