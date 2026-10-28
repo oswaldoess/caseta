@@ -33,7 +33,7 @@ Cada servicio sigue la misma estructura: `src/routes`, `src/controllers`, `src/s
 ## Requisitos
 
 - Node.js 24 LTS
-- MySQL 8.4 (a partir de la Entrega 5)
+- MySQL 8.4 (o 8.0)
 - Git
 
 ## Cómo ejecutarlo
@@ -48,11 +48,24 @@ Para comprobar que todo funciona, abre http://localhost:3000/api/v1/health. Debe
 
 Para levantar un solo servicio: `npm run dev -w services/visitas`.
 
+### Base de datos
+
+Los scripts están en `database/`. Para crear la base con sus datos de prueba y los usuarios de cada servicio:
+
+```bash
+mysql -u root -p < database/01_esquema.sql
+mysql -u root -p < database/02_datos_prueba.sql
+mysql -u root -p < database/04_usuarios_servicios.sql
+```
+
+Más detalle en `database/README.md`.
+
 ## Documentación
 
 - Especificación de la API: `docs/api/openapi.yaml` (se puede abrir en https://editor.swagger.io).
 - Documentos de cada entrega: `docs/entregas/`.
-- Diagramas: `docs/diagramas/`.
+- Diagramas: `docs/diagramas/` (arquitectura, modelo de dominio, flujo de registrar una entrada y modelo entidad-relación).
+- Scripts de la base de datos: `database/`.
 
 ## Cómo trabajamos en el repositorio
 
@@ -68,7 +81,7 @@ Para levantar un solo servicio: `npm run dev -w services/visitas`.
 | 1 | Propuesta del proyecto | Entregada |
 | 2 | Análisis de requisitos y arquitectura | Entregada |
 | 3 | Diseño de la API y contratos de servicio | Entregada |
-| 4 | Modelo de datos y persistencia | Pendiente |
+| 4 | Modelo de datos y persistencia | Entregada |
 | 5 | MVP Backend I | Pendiente |
 | 6 | MVP Backend II e integración | Pendiente |
 | 7 | Pruebas, seguridad, documentación y despliegue | Pendiente |
