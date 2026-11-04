@@ -42,4 +42,4 @@ function manejadorErrores(err, req, res, next) {
   return res.status(500).json(cuerpoError(req, 500, "ERROR_INTERNO", "Ocurrió un error inesperado. Inténtalo más tarde."));
 }
 
-module.exports = { ErrorApi, cuerpoError, rutaNoEncontrada, manejadorErrores };
+module.exports = { ErrorApi, cuerpoError, rutaNoEncontrada, manejadorErrores, fechaLocal };

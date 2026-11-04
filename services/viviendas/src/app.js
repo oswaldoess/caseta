@@ -1,14 +1,15 @@
 const express = require("express");
-const { rutaNoEncontrada, manejadorErrores } = require("@caseta/shared");
-const healthRoutes = require("./routes/health.routes");
+const { rutaNoEncontrada, manejadorErrores, crearRutaSalud } = require("@caseta/shared");
+const { version } = require("../package.json");
 
 // S2. Viviendas: viviendas y asignación de residentes.
 const app = express();
-app.use(express.json());
+app.disable("x-powered-by");
+app.use(express.json({ limit: "100kb" }));
 
-app.use(healthRoutes);
-// Aquí se montarán las rutas del servicio, por ejemplo:
-// app.use("/api/v1/...", require("./routes/...routes"));
+app.use(crearRutaSalud("viviendas", version));
+app.use("/api/v1/viviendas", require("./routes/viviendas.routes"));
+// Entrega 6: ruta interna I03 (vivienda y domicilio de un residente) para Visitas.
 
 app.use(rutaNoEncontrada);
 app.use(manejadorErrores);

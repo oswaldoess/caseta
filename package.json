@@ -1,6 +1,6 @@
 {
   "name": "caseta",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Caseta: sistema de control de visitas para fraccionamientos privados (proyecto integrador de Arquitectura Orientada a Servicios, UPSRJ).",
   "workspaces": [
@@ -15,10 +15,12 @@
   "scripts": {
     "setup:env": "node scripts/setup-env.js",
     "dev": "concurrently -n gateway,identidad,viviendas,visitas,accesos,reglas -c auto \"npm run dev -w gateway\" \"npm run dev -w services/identidad\" \"npm run dev -w services/viviendas\" \"npm run dev -w services/visitas\" \"npm run dev -w services/accesos\" \"npm run dev -w services/reglas\"",
-    "start": "concurrently -n gateway,identidad,viviendas,visitas,accesos,reglas -c auto \"npm start -w gateway\" \"npm start -w services/identidad\" \"npm start -w services/viviendas\" \"npm start -w services/visitas\" \"npm start -w services/accesos\" \"npm start -w services/reglas\""
+    "start": "concurrently -n gateway,identidad,viviendas,visitas,accesos,reglas -c auto \"npm start -w gateway\" \"npm start -w services/identidad\" \"npm start -w services/viviendas\" \"npm start -w services/visitas\" \"npm start -w services/accesos\" \"npm start -w services/reglas\"",
+    "db:crear": "node scripts/crear-base.js"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "mysql2": "^3.24.6"
   },
   "engines": {
     "node": ">=24"

@@ -1,6 +1,6 @@
 {
   "name": "@caseta/identidad",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "private": true,
   "description": "S1. Identidad: usuarios, roles, sesiones y tokens.",
   "main": "src/index.js",
@@ -11,6 +11,7 @@
   "dependencies": {
     "@caseta/shared": "*",
     "dotenv": "^16.4.7",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "bcryptjs": "^3.0.3"
   }
 }

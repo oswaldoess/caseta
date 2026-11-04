@@ -3,7 +3,7 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const { createProxyMiddleware } = require("http-proxy-middleware");
-const { rutaNoEncontrada, manejadorErrores, cuerpoError } = require("@caseta/shared");
+const { rutaNoEncontrada, manejadorErrores, cuerpoError, fechaLocal } = require("@caseta/shared");
 const rutas = require("./rutas");
 
 const app = express();
@@ -29,7 +29,7 @@ app.get("/api/v1/health", async (req, res) => {
     }
   }));
   const todoBien = Object.values(servicios).every((e) => e === "ok");
-  res.status(todoBien ? 200 : 503).json({ estado: todoBien ? "ok" : "degradado", version: "1.0.0", fecha: new Date().toISOString(), servicios });
+  res.status(todoBien ? 200 : 503).json({ estado: todoBien ? "ok" : "degradado", version: "1.0.0", fecha: fechaLocal(), servicios });
 });
 
 // Aquí se agregará la verificación del token y de su revocación (Entrega 6).

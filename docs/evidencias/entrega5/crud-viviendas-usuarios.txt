@@ -1,0 +1,282 @@
+Caseta · Entrega 5 · Evidencia de los CRUD (salida real de la terminal)
+Base reiniciada con npm run db:crear; todas las peticiones pasan por el API Gateway (puerto 3000).
+
+=== 1. Crear un registro (E10 Registrar vivienda)
+$ POST /viviendas
+{
+  "calle": "Calle Roble",
+  "numero": "31",
+  "referencia": "Manzana 5, lote 2"
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/viviendas/7
+{
+  "id": 7,
+  "calle": "Calle Roble",
+  "numero": "31",
+  "referencia": "Manzana 5, lote 2",
+  "domicilio": "Calle Roble 31",
+  "activa": true,
+  "totalResidentes": 0,
+  "creadaEn": "2026-11-04T16:10:19-06:00",
+  "actualizadaEn": "2026-11-04T16:10:19-06:00"
+}
+
+=== 2. Consultar uno (E11 Consultar vivienda)
+$ GET /viviendas/7
+
+HTTP/1.1 200 OK
+{
+  "id": 7,
+  "calle": "Calle Roble",
+  "numero": "31",
+  "referencia": "Manzana 5, lote 2",
+  "domicilio": "Calle Roble 31",
+  "activa": true,
+  "totalResidentes": 0,
+  "creadaEn": "2026-11-04T16:10:19-06:00",
+  "actualizadaEn": "2026-11-04T16:10:19-06:00"
+}
+
+=== 3. Consultar varios (E09 Listar viviendas, con búsqueda y paginación)
+$ GET /viviendas?q=fresnos&pagina=1&limite=2
+
+HTTP/1.1 200 OK
+{
+  "datos": [
+    {
+      "id": 2,
+      "calle": "Av. de los Fresnos",
+      "numero": "218",
+      "referencia": "Manzana 3, lote 14",
+      "domicilio": "Av. de los Fresnos 218",
+      "activa": true,
+      "totalResidentes": 1,
+      "creadaEn": "2026-09-01T11:02:00-06:00",
+      "actualizadaEn": "2026-11-04T16:10:19-06:00"
+    },
+    {
+      "id": 1,
+      "calle": "Av. de los Fresnos",
+      "numero": "214",
+      "referencia": "Manzana 3, lote 12",
+      "domicilio": "Av. de los Fresnos 214",
+      "activa": true,
+      "totalResidentes": 2,
+      "creadaEn": "2026-09-01T11:00:00-06:00",
+      "actualizadaEn": "2026-11-04T16:10:19-06:00"
+    }
+  ],
+  "paginacion": {
+    "pagina": 1,
+    "limite": 2,
+    "total": 2,
+    "totalPaginas": 1
+  }
+}
+
+=== 4. Modificar un registro (E12 Modificar vivienda)
+$ PATCH /viviendas/7
+{
+  "referencia": "Manzana 5, lote 2, casa esquina"
+}
+
+HTTP/1.1 200 OK
+{
+  "id": 7,
+  "calle": "Calle Roble",
+  "numero": "31",
+  "referencia": "Manzana 5, lote 2, casa esquina",
+  "domicilio": "Calle Roble 31",
+  "activa": true,
+  "totalResidentes": 0,
+  "creadaEn": "2026-11-04T16:10:19-06:00",
+  "actualizadaEn": "2026-11-04T16:10:19-06:00"
+}
+
+=== 5a. Crear un usuario (E06) para asignarlo
+$ POST /usuarios
+{
+  "nombreCompleto": "Elena Robles Díaz",
+  "correo": "elena.robles@correo.com",
+  "telefono": "4425550199",
+  "rol": "residente",
+  "contrasenaInicial": "Temporal2026!"
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/usuarios/12
+{
+  "id": 12,
+  "nombreCompleto": "Elena Robles Díaz",
+  "correo": "elena.robles@correo.com",
+  "telefono": "4425550199",
+  "rol": "residente",
+  "activo": true,
+  "creadoEn": "2026-11-04T16:10:19-06:00",
+  "actualizadoEn": "2026-11-04T16:10:19-06:00"
+}
+
+=== 5b. Asignar residente (E14). Viviendas consulta a Identidad por la ruta interna I02
+$ POST /viviendas/7/residentes
+{
+  "usuarioId": 12,
+  "esTitular": true
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/viviendas/7/residentes/12
+{
+  "usuarioId": 12,
+  "nombreCompleto": "Elena Robles Díaz",
+  "esTitular": true,
+  "fechaAlta": "2026-11-04"
+}
+
+=== 5c. Eliminar un registro (E15 Retirar residente)
+$ DELETE /viviendas/7/residentes/12
+
+HTTP/1.1 204 No Content
+
+=== 5d. Baja lógica (E08 Desactivar usuario): el usuario no se borra, se desactiva
+$ PATCH /usuarios/12
+{
+  "activo": false
+}
+
+HTTP/1.1 200 OK
+{
+  "id": 12,
+  "nombreCompleto": "Elena Robles Díaz",
+  "correo": "elena.robles@correo.com",
+  "telefono": "4425550199",
+  "rol": "residente",
+  "activo": false,
+  "creadoEn": "2026-11-04T16:10:19-06:00",
+  "actualizadoEn": "2026-11-04T16:10:19-06:00"
+}
+
+=== 6. Error de validación (400)
+$ POST /usuarios
+{
+  "nombreCompleto": "E",
+  "correo": "no-es-correo",
+  "telefono": "123",
+  "rol": "jefe",
+  "contrasenaInicial": "corta"
+}
+
+HTTP/1.1 400 Bad Request
+{
+  "error": {
+    "codigo": "VALIDACION_FALLIDA",
+    "mensaje": "Algunos campos no son válidos.",
+    "estado": 400,
+    "detalles": [
+      {
+        "campo": "nombreCompleto",
+        "mensaje": "Debe tener entre 3 y 120 caracteres."
+      },
+      {
+        "campo": "correo",
+        "mensaje": "Debe ser un correo válido."
+      },
+      {
+        "campo": "telefono",
+        "mensaje": "Debe tener exactamente 10 dígitos."
+      },
+      {
+        "campo": "rol",
+        "mensaje": "Debe ser uno de: residente, guardia, administrador."
+      },
+      {
+        "campo": "contrasenaInicial",
+        "mensaje": "Debe tener entre 8 y 72 caracteres."
+      }
+    ],
+    "ruta": "/api/v1/usuarios",
+    "fecha": "2026-11-04T16:10:19-06:00",
+    "idSolicitud": "req_94b3d597"
+  }
+}
+
+=== 7. Recurso inexistente (404)
+$ GET /viviendas/999
+
+HTTP/1.1 404 Not Found
+{
+  "error": {
+    "codigo": "RECURSO_NO_ENCONTRADO",
+    "mensaje": "La vivienda 999 no existe.",
+    "estado": 404,
+    "detalles": [],
+    "ruta": "/api/v1/viviendas/999",
+    "fecha": "2026-11-04T16:10:20-06:00",
+    "idSolicitud": "req_e964a7ad"
+  }
+}
+
+=== 8. Conflicto con datos existentes (409)
+$ POST /viviendas
+{
+  "calle": "Av. de los Fresnos",
+  "numero": "214"
+}
+
+HTTP/1.1 409 Conflict
+{
+  "error": {
+    "codigo": "VIVIENDA_DUPLICADA",
+    "mensaje": "Ya existe la vivienda Av. de los Fresnos 214.",
+    "estado": 409,
+    "detalles": [],
+    "ruta": "/api/v1/viviendas",
+    "fecha": "2026-11-04T16:10:20-06:00",
+    "idSolicitud": "req_506c5d29"
+  }
+}
+
+=== 9. Regla entre servicios (422): un guardia no puede vivir en una vivienda
+$ POST /viviendas/7/residentes
+{
+  "usuarioId": 2
+}
+
+HTTP/1.1 422 Unprocessable Entity
+{
+  "error": {
+    "codigo": "REFERENCIA_INVALIDA",
+    "mensaje": "El usuario 2 no tiene rol de residente.",
+    "estado": 422,
+    "detalles": [
+      {
+        "campo": "usuarioId",
+        "mensaje": "Debe ser un usuario activo con rol residente."
+      }
+    ],
+    "ruta": "/api/v1/viviendas/7/residentes",
+    "fecha": "2026-11-04T16:10:20-06:00",
+    "idSolicitud": "req_c5ef40d0"
+  }
+}
+
+=== 10. Persistencia: los cambios quedaron en MySQL
+$ mysql -u caseta_viviendas -p -e "SELECT id, calle, numero, referencia, activa FROM caseta.viviendas WHERE id = 7"
++----+-------------+--------+---------------------------------+--------+
+| id | calle       | numero | referencia                      | activa |
++----+-------------+--------+---------------------------------+--------+
+|  7 | Calle Roble | 31     | Manzana 5, lote 2, casa esquina |      1 |
++----+-------------+--------+---------------------------------+--------+
+$ mysql -u caseta_identidad -p -e "SELECT id, correo, rol, activo, LEFT(contrasena_hash, 7) AS hash FROM caseta.usuarios WHERE id = 12"
++----+-------------------------+-----------+--------+---------+
+| id | correo                  | rol       | activo | hash    |
++----+-------------------------+-----------+--------+---------+
+| 12 | elena.robles@correo.com | residente |      0 | $2b$10$ |
++----+-------------------------+-----------+--------+---------+
+$ mysql -u caseta_viviendas -p -e "SELECT COUNT(*) AS asignaciones FROM caseta.residentes_vivienda WHERE vivienda_id = 7"
++--------------+
+| asignaciones |
++--------------+
+|            0 |
++--------------+

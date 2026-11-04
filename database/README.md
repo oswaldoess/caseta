@@ -12,7 +12,13 @@ Scripts de MySQL de la Entrega 4 (modelo de datos y persistencia). Probados en M
 
 ## Cómo ejecutarlos
 
-Desde la raíz del repositorio:
+La forma más corta, desde la raíz del repositorio (pide la contraseña de `root` de MySQL):
+
+```bash
+npm run db:crear   # ejecuta 01, 02 y 04 en orden
+```
+
+O uno por uno con el cliente de MySQL:
 
 ```bash
 mysql -u root -p < database/01_esquema.sql

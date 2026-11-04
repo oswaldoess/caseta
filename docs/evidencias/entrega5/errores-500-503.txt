@@ -1,0 +1,71 @@
+Caseta · Entrega 5 · Manejo de errores 503 y 500 (salida real de la terminal)
+
+=== 1. Servicio de Identidad detenido: Viviendas no puede validar al residente (503)
+$ POST /viviendas/7/residentes  {"usuarioId": 10}
+HTTP/1.1 503 Service Unavailable
+{
+  "error": {
+    "codigo": "SERVICIO_NO_DISPONIBLE",
+    "mensaje": "El servicio de Identidad no está disponible en este momento. Inténtalo en unos momentos.",
+    "estado": 503,
+    "detalles": [],
+    "ruta": "/api/v1/viviendas/7/residentes",
+    "fecha": "2026-11-04T16:11:10-06:00",
+    "idSolicitud": "req_1bdda73c"
+  }
+}
+
+=== 2. El gateway tampoco puede llegar a Identidad (503) y /health lo reporta
+$ GET /usuarios/1
+HTTP/1.1 503 Service Unavailable
+{
+  "error": {
+    "codigo": "SERVICIO_NO_DISPONIBLE",
+    "mensaje": "El servicio no está disponible en este momento. Inténtalo en unos momentos.",
+    "estado": 503,
+    "detalles": [],
+    "ruta": "/api/v1/usuarios/1",
+    "fecha": "2026-11-04T16:11:10-06:00",
+    "idSolicitud": "req_d18cfb1a"
+  }
+}
+$ GET /health
+HTTP/1.1 503 Service Unavailable
+{
+  "estado": "degradado",
+  "version": "1.0.0",
+  "fecha": "2026-11-04T16:11:10-06:00",
+  "servicios": {
+    "identidad": "sin_respuesta",
+    "viviendas": "ok",
+    "accesos": "ok",
+    "reglas": "ok",
+    "visitas": "ok"
+  }
+}
+
+=== 3. MySQL detenido: error no previsto (500). El mensaje es genérico; el detalle solo queda en el registro del servidor
+$ GET /viviendas
+HTTP/1.1 500 Internal Server Error
+{
+  "error": {
+    "codigo": "ERROR_INTERNO",
+    "mensaje": "Ocurrió un error inesperado. Inténtalo más tarde.",
+    "estado": 500,
+    "detalles": [],
+    "ruta": "/api/v1/viviendas",
+    "fecha": "2026-11-04T16:11:15-06:00",
+    "idSolicitud": "req_71b482d8"
+  }
+}
+Registro del servidor (consola de npm run dev), buscado por idSolicitud:
+[viviendas] [req_71b482d8] Error: connect ECONNREFUSED 127.0.0.1:3306
+$ GET http://localhost:3002/health
+HTTP/1.1 503 Service Unavailable
+{
+  "servicio": "viviendas",
+  "estado": "degradado",
+  "baseDatos": "sin_conexion",
+  "version": "0.5.0",
+  "fecha": "2026-11-04T16:11:15-06:00"
+}

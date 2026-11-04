@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Caseta API
-  version: 1.0.0-borrador
+  version: 1.0.0-entrega5
   description: >-
     API pública de Caseta, sistema de control de visitas para fraccionamientos privados. Todas las peticiones entran por
     el API Gateway. Borrador de la Entrega 3 del proyecto integrador de Arquitectura Orientada a Servicios (UPSRJ).
@@ -667,7 +667,9 @@ paths:
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
-          description: El residente ya está asignado a otra vivienda.
+          description: >-
+            El residente ya está asignado a otra vivienda (RESIDENTE_YA_ASIGNADO), o se pidió esTitular true y la
+            vivienda ya tiene titular (TITULAR_YA_ASIGNADO, agregado en la Entrega 5).
           content:
             application/json:
               schema:

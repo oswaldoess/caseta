@@ -1,0 +1,224 @@
+newman
+
+Caseta API - Entrega 5
+
+❏ 0. Estado del sistema
+↳ E33 Estado del sistema
+  GET http://localhost:3000/api/v1/health [200 OK, 1.13kB, 36ms]
+  ✓  Responde 200
+  ✓  Los cinco servicios responden
+
+❏ 1. Usuarios (S1. Identidad)
+↳ E06 Crear usuario
+  POST http://localhost:3000/api/v1/usuarios [201 Created, 1.21kB, 120ms]
+  ✓  Responde 201
+  ✓  Devuelve Location y el usuario creado
+  ✓  Nunca devuelve la contraseña
+
+↳ E05 Listar usuarios
+  GET http://localhost:3000/api/v1/usuarios?pagina=1&limite=5 [200 OK, 2.15kB, 12ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Nunca devuelve la contraseña
+
+↳ E05 Filtrar residentes activos por nombre
+  GET http://localhost:3000/api/v1/usuarios?rol=residente&activo=true&q=robles [200 OK, 1.25kB, 11ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Todos son residentes activos
+
+↳ E07 Consultar usuario
+  GET http://localhost:3000/api/v1/usuarios/12 [200 OK, 1.17kB, 18ms]
+  ✓  Responde 200
+  ✓  Es el usuario creado
+  ✓  Nunca devuelve la contraseña
+
+↳ E08 Modificar teléfono
+  PATCH http://localhost:3000/api/v1/usuarios/12 [200 OK, 1.17kB, 12ms]
+  ✓  Responde 200
+  ✓  Se guardó el teléfono
+
+↳ Error E06 correo duplicado (409)
+  POST http://localhost:3000/api/v1/usuarios [409 Conflict, 1.2kB, 92ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: CORREO_DUPLICADO
+
+↳ Error E06 datos inválidos (400)
+  POST http://localhost:3000/api/v1/usuarios [400 Bad Request, 1.52kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E06 campo no permitido (400)
+  POST http://localhost:3000/api/v1/usuarios [400 Bad Request, 1.2kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E07 usuario inexistente (404)
+  GET http://localhost:3000/api/v1/usuarios/999999 [404 Not Found, 1.16kB, 9ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+↳ Error E07 identificador inválido (400)
+  GET http://localhost:3000/api/v1/usuarios/abc [400 Bad Request, 1.23kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E05 paginación inválida (400)
+  GET http://localhost:3000/api/v1/usuarios?pagina=0&limite=500 [400 Bad Request, 1.31kB, 5ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E08 sin campos (400)
+  PATCH http://localhost:3000/api/v1/usuarios/12 [400 Bad Request, 1.25kB, 6ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+
+❏ 2. Viviendas (S2. Viviendas)
+↳ E10 Registrar vivienda
+  POST http://localhost:3000/api/v1/viviendas [201 Created, 1.21kB, 20ms]
+  ✓  Responde 201
+  ✓  Devuelve Location y la vivienda creada
+
+↳ E09 Listar viviendas
+  GET http://localhost:3000/api/v1/viviendas?pagina=1&limite=10 [200 OK, 2.6kB, 10ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+
+↳ E09 Buscar viviendas activas
+  GET http://localhost:3000/api/v1/viviendas?q=roble&activa=true [200 OK, 1.25kB, 11ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+
+↳ E11 Consultar vivienda
+  GET http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.17kB, 10ms]
+  ✓  Responde 200
+  ✓  Es la vivienda creada
+
+↳ E12 Modificar referencia
+  PATCH http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.19kB, 14ms]
+  ✓  Responde 200
+  ✓  Se guardó la referencia
+
+↳ Error E10 vivienda duplicada (409)
+  POST http://localhost:3000/api/v1/viviendas [409 Conflict, 1.17kB, 9ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: VIVIENDA_DUPLICADA
+
+↳ Error E10 datos inválidos (400)
+  POST http://localhost:3000/api/v1/viviendas [400 Bad Request, 1.35kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E11 vivienda inexistente (404)
+  GET http://localhost:3000/api/v1/viviendas/999999 [404 Not Found, 1.16kB, 8ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+↳ Error E12 cambiar a un domicilio que ya existe (409)
+  PATCH http://localhost:3000/api/v1/viviendas/7 [409 Conflict, 1.17kB, 9ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: VIVIENDA_DUPLICADA
+
+❏ 3. Residentes de una vivienda (S2 → S1)
+↳ E14 Asignar residente titular
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [201 Created, 1.09kB, 49ms]
+  ✓  Responde 201
+  ✓  Asignación con el nombre que da Identidad
+
+↳ E13 Listar residentes
+  GET http://localhost:3000/api/v1/viviendas/7/residentes [200 OK, 1.05kB, 12ms]
+  ✓  Responde 200
+  ✓  Aparece el residente asignado
+
+↳ E11 La vivienda ya cuenta 1 residente
+  GET http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.19kB, 6ms]
+  ✓  Responde 200
+  ✓  totalResidentes = 1
+
+↳ Error E14 residente ya asignado (409)
+  POST http://localhost:3000/api/v1/viviendas/1/residentes [409 Conflict, 1.2kB, 19ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: RESIDENTE_YA_ASIGNADO
+
+↳ Error E14 usuario guardia (422)
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [422 Unprocessable Entity, 1.27kB, 14ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: REFERENCIA_INVALIDA
+
+↳ Error E14 usuario inexistente (422)
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [422 Unprocessable Entity, 1.25kB, 14ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: REFERENCIA_INVALIDA
+
+↳ Error E14 tipos inválidos (400)
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [400 Bad Request, 1.3kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ E15 Retirar residente
+  DELETE http://localhost:3000/api/v1/viviendas/7/residentes/12 [204 No Content, 840B, 12ms]
+  ✓  Responde 204
+
+↳ Error E15 retirar otra vez (404)
+  DELETE http://localhost:3000/api/v1/viviendas/7/residentes/12 [404 Not Found, 1.19kB, 8ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+❏ 4. Bajas lógicas
+↳ E08 Desactivar usuario
+  PATCH http://localhost:3000/api/v1/usuarios/12 [200 OK, 1.17kB, 11ms]
+  ✓  Responde 200
+  ✓  Queda inactivo
+
+↳ Error E14 asignar usuario desactivado (422)
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [422 Unprocessable Entity, 1.26kB, 13ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: REFERENCIA_INVALIDA
+
+↳ E12 Desactivar vivienda
+  PATCH http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.19kB, 10ms]
+  ✓  Responde 200
+  ✓  Queda inactiva
+
+↳ E09 Listar viviendas inactivas
+  GET http://localhost:3000/api/v1/viviendas?activa=false [200 OK, 1.49kB, 13ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Incluye la vivienda desactivada
+
+❏ 5. Errores generales
+↳ Ruta inexistente (404)
+  GET http://localhost:3000/api/v1/viviendas/1/mascotas [404 Not Found, 1.17kB, 5ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+↳ JSON mal formado (400)
+  POST http://localhost:3000/api/v1/viviendas [400 Bad Request, 1.17kB, 5ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                37 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                37 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │                84 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 1304ms                                     │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 11.93kB (approx)                          │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 17ms [min: 5ms, max: 120ms, s.d.: 22ms] │
+└────────────────────────────────────────────────────────────────┘
