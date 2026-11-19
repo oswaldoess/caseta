@@ -1,0 +1,165 @@
+Caseta · Entrega 7 · Pruebas automatizadas (salida real de la terminal)
+$ npm test -- --verbose
+
+PASS integracion tests/integracion/autenticacion.test.js
+  E01 Iniciar sesión
+    ✓ devuelve un token Bearer de 8 horas y nunca la contraseña (91 ms)
+    ✓ contraseña incorrecta y cuenta desactivada responden igual (401) (160 ms)
+    ✓ datos inválidos responden 400 con cada campo (6 ms)
+    ✓ el sexto intento fallido en un minuto responde 429 (384 ms)
+  Token en las rutas protegidas
+    ✓ sin token, token falso, token vencido y token de otro secreto responden 401 (13 ms)
+    ✓ E02 cerrar sesión invalida el token de inmediato (107 ms)
+    ✓ una cuenta desactivada pierde sus sesiones abiertas (170 ms)
+    ✓ E04 cambiar la contraseña exige la actual (569 ms)
+    ✓ llamar directo a un servicio, sin pasar por el gateway, responde 401 (8 ms)
+    ✓ el gateway no expone detalles del servidor (11 ms)
+  CORS
+    ✓ un origen permitido recibe Access-Control-Allow-Origin (2 ms)
+    ✓ un origen que no está en la lista no lo recibe (7 ms)
+
+PASS integracion tests/integracion/flujo-visita.test.js
+  Flujo completo con un código
+    ✓ 1. el residente registra una visita y el servidor genera el código (25 ms)
+    ✓ 2. el guardia la ve entre las visitas de hoy (11 ms)
+    ✓ 3. el guardia valida el código (también en minúsculas) (12 ms)
+    ✓ 4. el guardia registra la entrada (23 ms)
+    ✓ 5. la visita queda utilizada y aparece en el historial del residente (21 ms)
+    ✓ 6. el guardia registra la salida y no puede registrarla dos veces (RN07) (17 ms)
+    ✓ 7. el código ya no permite otra entrada (RN04) (12 ms)
+    ✓ 8. una visita con entrada no se modifica ni se cancela (RN06) (23 ms)
+    ✓ 9. otra residente no puede ver la visita ni el acceso (404) (17 ms)
+  Cancelación, visitas frecuentes y no programadas
+    ✓ una visita cancelada ya no sirve en la caseta (57 ms)
+    ✓ una visita frecuente entra varias veces, pero no si ya está dentro (RN05) (83 ms)
+    ✓ entrada de una visita no programada y vivienda desactivada (59 ms)
+
+PASS integracion tests/integracion/permisos.test.js
+  Un rol sin permiso no puede ejecutar operaciones protegidas
+    ✓ residente get /api/v1/usuarios -> 403 (8 ms)
+    ✓ guardia get /api/v1/usuarios -> 403 (5 ms)
+    ✓ residente post /api/v1/usuarios -> 403 (6 ms)
+    ✓ guardia patch /api/v1/usuarios/5 -> 403 (6 ms)
+    ✓ residente get /api/v1/viviendas -> 403 (6 ms)
+    ✓ guardia get /api/v1/viviendas/1 -> 403 (5 ms)
+    ✓ residente post /api/v1/viviendas -> 403 (5 ms)
+    ✓ residente post /api/v1/viviendas/1/residentes -> 403 (5 ms)
+    ✓ guardia post /api/v1/visitas -> 403 (6 ms)
+    ✓ administrador post /api/v1/visitas -> 403 (5 ms)
+    ✓ guardia get /api/v1/visitas/1 -> 403 (4 ms)
+    ✓ administrador patch /api/v1/visitas/1 -> 403 (5 ms)
+    ✓ administrador delete /api/v1/visitas/1 -> 403 (10 ms)
+    ✓ residente get /api/v1/codigos/K7P4M2QX/validez -> 403 (10 ms)
+    ✓ administrador get /api/v1/codigos/K7P4M2QX/validez -> 403 (5 ms)
+    ✓ residente post /api/v1/accesos -> 403 (5 ms)
+    ✓ administrador post /api/v1/accesos -> 403 (5 ms)
+    ✓ residente post /api/v1/accesos/1/salida -> 403 (6 ms)
+    ✓ residente patch /api/v1/accesos/1 -> 403 (5 ms)
+    ✓ residente post /api/v1/adeudos -> 403 (5 ms)
+    ✓ guardia get /api/v1/adeudos -> 403 (4 ms)
+    ✓ residente patch /api/v1/adeudos/3 -> 403 (6 ms)
+    ✓ guardia get /api/v1/parametros -> 403 (6 ms)
+    ✓ residente put /api/v1/parametros/tolerancia_minutos -> 403 (6 ms)
+  Cada rol solo ve sus datos
+    ✓ el residente ve su vivienda, pero la de otro responde 404 (19 ms)
+    ✓ el residente solo lista visitas de su vivienda, aunque intente filtrar otra (16 ms)
+    ✓ el residente solo ve el historial de su vivienda (21 ms)
+    ✓ el guardia solo consulta lo de hoy (11 ms)
+    ✓ todos los roles pueden ver su perfil (25 ms)
+
+PASS integracion tests/integracion/concurrencia.test.js
+  ✓ 10 entradas simultáneas con el mismo código dejan una sola entrada (501 ms)
+
+PASS integracion tests/integracion/reglas-y-validaciones.test.js
+  RN03. Límite de personas por adeudo
+    ✓ con adeudo pendiente se rechaza y al liquidarlo se permite (88 ms)
+  Validación de entradas
+    ✓ todos los errores de una visita se devuelven juntos (RN09) (6 ms)
+    ✓ visita con fecha a más de 30 días -> 400 (9 ms)
+    ✓ visita con fecha imposible -> 400 (12 ms)
+    ✓ visita con hora con formato inválido -> 400 (6 ms)
+    ✓ visita con personas como texto -> 400 (6 ms)
+    ✓ visita con más de 20 personas -> 400 (6 ms)
+    ✓ un campo que el contrato no define se rechaza (por ejemplo, intentar elegir la vivienda) (5 ms)
+    ✓ no se puede crear una cuenta con rol inventado ni contraseña corta (7 ms)
+    ✓ un texto con intento de inyección SQL se trata como dato, no como consulta (7 ms)
+    ✓ operaciones imposibles: parámetro fuera de rango, adeudo de 0 pesos, salida de un acceso que no existe (30 ms)
+    ✓ JSON mal formado responde 400 y un cuerpo de más de 100 KB responde 413 (18 ms)
+    ✓ paginación inválida responde 400 (6 ms)
+
+PASS unidad tests/unidad/token-gateway.test.js
+  Verificación del token en el gateway
+    ✓ las rutas públicas pasan sin token (2 ms)
+    ✓ sin token responde 401 TOKEN_INVALIDO (1 ms)
+    ✓ un token válido pasa y el gateway agrega la identidad (1 ms)
+    ✓ el esquema Bearer no distingue mayúsculas (defecto D02) (1 ms)
+    ✓ un token expirado responde TOKEN_EXPIRADO (1 ms)
+    ✓ un token firmado con otro secreto se rechaza (1 ms)
+    ✓ un token sin firma (alg none) se rechaza (1 ms)
+    ✓ un token revocado (I01 responde 200) se rechaza (1 ms)
+    ✓ si Identidad no puede verificar el token responde 503 (1 ms)
+    ✓ los encabezados de identidad que manda el cliente se borran (1 ms)
+
+PASS unidad tests/unidad/errores-y-permisos.test.js
+  Formato estándar de errores
+    ✓ un ErrorApi conserva su estado, código y detalles (9 ms)
+    ✓ un error inesperado responde 500 genérico y no revela el detalle interno (2 ms)
+    ✓ JSON mal formado responde 400 (8 ms)
+    ✓ un cuerpo demasiado grande responde 413, no 500 (defecto D01) (3 ms)
+    ✓ una ruta inexistente responde 404 con el mismo formato (2 ms)
+  Permisos en los servicios
+    ✓ sin la clave de servicio se rechaza aunque traiga encabezados de identidad (2 ms)
+    ✓ con la clave equivocada también se rechaza (2 ms)
+    ✓ sin usuario identificado responde 401 (5 ms)
+    ✓ rol residente en una ruta de administración -> 403 (2 ms)
+    ✓ rol guardia en una ruta de administración -> 403 (1 ms)
+    ✓ rol administrador en una ruta de administración -> 200 (1 ms)
+    ✓ un rol inventado no cuenta como sesión (2 ms)
+
+PASS unidad tests/unidad/fechas-y-validaciones.test.js
+  Fechas
+    ✓ sumarDias cruza meses y años
+    ✓ sumarMeses respeta el último día del mes (31 de agosto + 6 meses = 28 de febrero)
+    ✓ diaSemana devuelve el nombre en español sin acentos
+    ✓ deMinutos no se sale del día al restar o sumar la tolerancia (1 ms)
+    ✓ fechaLegible y aIso dan el formato de la API
+  Validadores de entrada
+    ✓ esFecha("2026-11-18") = true (1 ms)
+    ✓ esFecha("2026-02-30") = false
+    ✓ esFecha("2026-13-01") = false
+    ✓ esFecha("18/11/2026") = false (1 ms)
+    ✓ esFecha("") = false
+    ✓ esFecha(20261118) = false
+    ✓ esHora("00:00") = true
+    ✓ esHora("23:59") = true
+    ✓ esHora("24:00") = false (1 ms)
+    ✓ esHora("9:00") = false
+    ✓ esHora("18:60") = false
+    ✓ esHora("18:00:00") = false
+
+PASS unidad tests/unidad/validez-codigo.test.js
+  Validez de un código (RN04, RN05)
+    ✓ una visita activa dentro de su horario es válida (1 ms)
+    ✓ motivo cancelado (1 ms)
+    ✓ motivo ya_utilizado
+    ✓ motivo vencido
+    ✓ motivo vencido
+    ✓ motivo aun_no_vigente
+    ✓ motivo dia_no_permitido
+    ✓ la tolerancia permite llegar 15 minutos antes, pero no 16
+    ✓ la tolerancia también aplica después de la hora de fin (1 ms)
+    ✓ una visita frecuente en su día es válida, pero no si ya está dentro (RN05)
+    ✓ cancelada gana sobre cualquier otro motivo
+
+PASS unidad tests/unidad/regla-adeudo.test.js
+  Regla del límite por adeudo (RN03)
+    ✓ sin adeudo pendiente no hay límite
+    ✓ con adeudo, 7 ya registradas + 3 llega justo al límite de 10
+    ✓ con adeudo, 7 ya registradas + 4 se rechaza y explica el motivo (1 ms)
+    ✓ si ya se pasó del límite, quedan 0 disponibles (nunca negativo)
+
+Test Suites: 10 passed, 10 total
+Tests:       121 passed, 121 total
+Snapshots:   0 total
+Time:        4.537 s, estimated 5 s
+Ran all test suites in 2 projects.

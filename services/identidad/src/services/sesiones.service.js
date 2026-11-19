@@ -25,6 +25,9 @@ function intentosRecientes(clave) {
   return lista;
 }
 
+// Limpieza cada minuto para que el mapa no crezca sin límite con correos distintos (defecto D04).
+setInterval(() => { for (const clave of intentos.keys()) intentosRecientes(clave); }, VENTANA_MS).unref();
+
 const credencialesInvalidas = () =>
   new ErrorApi(401, "CREDENCIALES_INVALIDAS", "El correo o la contraseña no son correctos.");
 

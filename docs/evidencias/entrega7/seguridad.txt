@@ -1,0 +1,105 @@
+Caseta · Entrega 7 · Revisión de seguridad (salida real de la terminal)
+
+=== 1. Ningún archivo .env real está en el repositorio (solo los .env.example)
+$ git ls-files | grep -i "\.env"
+gateway/.env.example
+services/accesos/.env.example
+services/identidad/.env.example
+services/reglas/.env.example
+services/visitas/.env.example
+services/viviendas/.env.example
+$ git check-ignore -v gateway/.env services/identidad/.env
+.gitignore:2:.env	gateway/.env
+.gitignore:2:.env	services/identidad/.env
+
+=== 2. Búsqueda de secretos en los archivos versionados (claves privadas, tokens de GitHub/AWS, JWT firmados)
+$ git grep -nIE "BEGIN (RSA|EC|OPENSSH) PRIVATE KEY|ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|eyJhbGciOi[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\." -- . ":!package-lock.json"
+docs/api/openapi.yaml:62:                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjUyLCJyb2wiOiJyZXNpZGVudGUiLCJqdGkiOiI3YzFlIn0.Qm8...
+(Única coincidencia: el ejemplo recortado de la documentación; la firma "Qm8..." no es válida, así que no es un token real.)
+$ grep -h "SECRET\|CLAVE\|PASSWORD" gateway/.env.example services/*/.env.example | sort -u
+CLAVE_SERVICIO=cambiar_esta_clave
+DB_PASSWORD=cambiar_esta_contrasena
+JWT_SECRET=cambiar_este_secreto
+(Solo valores de ejemplo; scripts/setup-env.js genera secretos aleatorios en cada .env local.)
+
+=== 3. Las contraseñas se guardan con bcrypt (costo 10), nunca en texto plano
++----+---------------------------+-------------------------------+-------+
+| id | correo                    | inicio_del_hash               | largo |
++----+---------------------------+-------------------------------+-------+
+|  1 | patricia.gomez@correo.com | $2b$10$M1.QnX4HM.X7h7wPCvn1Re |    60 |
+|  2 | miguel.torres@correo.com  | $2b$10$BDEIF79.dOderCo9ke.efO |    60 |
+|  3 | ricardo.nunez@correo.com  | $2b$10$fFbslZ3MNw0xpIo47QLmDO |    60 |
+|  4 | sandra.aguilar@correo.com | $2b$10$LYtr/ChURS0BBa3CPzIc0u |    60 |
++----+---------------------------+-------------------------------+-------+
+Ninguna respuesta de la API incluye la contraseña ni el hash:
+{
+  "id": 2,
+  "nombreCompleto": "Miguel Ángel Torres Ruiz",
+  "correo": "miguel.torres@correo.com",
+  "telefono": "4425550002",
+  "rol": "guardia",
+  "activo": true,
+  "creadoEn": "2026-09-01T09:10:00-06:00",
+  "actualizadoEn": "2026-11-18T19:05:03-06:00"
+}
+
+=== 4. Arranque en producción con los valores de ejemplo: el servicio se niega a iniciar
+$ NODE_ENV=production JWT_SECRET=cambiar_este_secreto CLAVE_SERVICIO=cambiar_esta_clave PORT=3999 node gateway/src/index.js
+[gateway] En producción no se permiten los valores de ejemplo en: JWT_SECRET, CLAVE_SERVICIO.
+código de salida: 1
+$ node gateway/src/index.js   # sin JWT_SECRET ni CLAVE_SERVICIO en el entorno
+[gateway] Faltan variables de entorno: JWT_SECRET, CLAVE_SERVICIO. Ejecuta npm run setup:env y revisa el archivo .env.
+código de salida: 1
+
+=== 5. npm audit de las dependencias que se ejecutan en producción
+$ npm audit --omit=dev
+found 0 vulnerabilities
+
+=== 6. CORS: solo los orígenes de CORS_ORIGEN reciben Access-Control-Allow-Origin
+$ curl -i -X OPTIONS /api/v1/visitas -H "Origin: http://localhost:5173" -H "Access-Control-Request-Method: POST"
+HTTP/1.1 204 No Content
+Access-Control-Allow-Origin: http://localhost:5173
+Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE
+Access-Control-Allow-Headers: Authorization,Content-Type,X-Request-Id
+Access-Control-Max-Age: 600
+Access-Control-Expose-Headers: Location,X-Request-Id
+$ curl -i /api/v1/health -H "Origin: http://sitio-ajeno.com"
+HTTP/1.1 200 OK
+(sin Access-Control-Allow-Origin: el navegador bloquea la respuesta)
+
+=== 7. Encabezados de seguridad (helmet) y sin X-Powered-By
+Content-Security-Policy: default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+X-Request-Id: req_c6ed5c66
+
+=== 8. Un servicio no acepta peticiones que no vengan del gateway, aunque se falsifique la identidad
+$ curl http://localhost:3001/api/v1/usuarios -H "X-Usuario-Id: 1" -H "X-Usuario-Rol: administrador"
+{"error":{"codigo":"TOKEN_INVALIDO","mensaje":"La petición debe hacerse a través del API Gateway.","estado":401,"detalles":[],"ruta":"/api/v1/usuarios","fecha":"2026-11-18T19:07:55-06:00","idSolicitud":null}}
+HTTP 401
+$ curl /api/v1/usuarios (token de guardia) -H "X-Usuario-Rol: administrador"   # el gateway borra el encabezado
+{"error":{"codigo":"SIN_PERMISO","mensaje":"Tu rol no tiene permiso para realizar esta operación.","estado":403,"detalles":[],"ruta":"/api/v1/usuarios","fecha":"2026-11-18T19:07:55-06:00","idSolicitud":"req_c7916767"}}
+HTTP 403
+
+=== 9. Los errores no revelan información interna
+$ POST /visitas con JSON mal formado
+{"error":{"codigo":"VALIDACION_FALLIDA","mensaje":"El cuerpo de la petición no es un JSON válido.","estado":400,"detalles":[],"ruta":"/api/v1/visitas","fecha":"2026-11-18T19:07:55-06:00","idSolicitud":"req_aea40d8c"}}
+HTTP 400
+$ POST /sesiones con un cuerpo de 200 KB (defecto D01: antes respondía 500)
+{"error":{"codigo":"VALIDACION_FALLIDA","mensaje":"El cuerpo de la petición supera el máximo de 100 KB.","estado":413,"detalles":[],"ruta":"/api/v1/sesiones","fecha":"2026-11-18T19:07:55-06:00","idSolicitud":"req_4b19f9ec"}}
+HTTP 413
+$ X-Request-Id con caracteres de control (defecto D03: se podía inyectar texto en los registros)
+X-Request-Id: req_1bb8eda5   (el gateway descarta el valor recibido y genera uno propio)
+
+=== 10. Documentación de la API (Swagger UI) servida por el gateway
+$ curl -I /api/docs/
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+$ curl /api/docs/openapi.json
+openapi 3.0.3 · Caseta API 1.0.0-entrega7 · 43 operaciones en 21 rutas

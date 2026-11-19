@@ -4,12 +4,14 @@
 // Uso:  npm run db:crear
 // Pide la contraseña del usuario administrador de MySQL (root por defecto).
 // También se pueden usar variables: MYSQL_ADMIN_USER, MYSQL_ADMIN_PASSWORD, DB_HOST, DB_PORT.
+// En producción, SIN_DATOS_PRUEBA=1 omite 02_datos_prueba.sql (las cuentas de prueba).
 const fs = require("fs");
 const path = require("path");
 const readline = require("readline");
 const mysql = require("mysql2/promise");
 
-const SCRIPTS = ["01_esquema.sql", "02_datos_prueba.sql", "04_usuarios_servicios.sql"];
+const SCRIPTS = ["01_esquema.sql", "02_datos_prueba.sql", "04_usuarios_servicios.sql"]
+  .filter((a) => !(process.env.SIN_DATOS_PRUEBA === "1" && a === "02_datos_prueba.sql"));
 
 function preguntarOculto(pregunta) {
   return new Promise((resolve) => {
@@ -48,6 +50,17 @@ async function main() {
       const sql = fs.readFileSync(path.join(__dirname, "..", "database", archivo), "utf8");
       await conexion.query(sql);
       console.log(`✔ ${archivo}`);
+    }
+    // Si el .env de un servicio tiene otra contraseña (por ejemplo, en producción), se aplica a su usuario de MySQL.
+    for (const servicio of fs.readdirSync(path.join(__dirname, "..", "services"))) {
+      const env = path.join(__dirname, "..", "services", servicio, ".env");
+      if (!fs.existsSync(env)) continue;
+      const vars = Object.fromEntries(fs.readFileSync(env, "utf8").split(/\r?\n/)
+        .map((l) => /^\s*([A-Z0-9_]+)\s*=\s*(.*)$/.exec(l)).filter(Boolean).map((m) => [m[1], m[2].trim()]));
+      if (vars.DB_USER && vars.DB_PASSWORD && vars.DB_PASSWORD !== "cambiar_esta_contrasena") {
+        await conexion.query("ALTER USER ?@'localhost' IDENTIFIED BY ?", [vars.DB_USER, vars.DB_PASSWORD]);
+        console.log(`✔ contraseña de ${vars.DB_USER} tomada de services/${servicio}/.env`);
+      }
     }
     const [[{ total }]] = await conexion.query("SELECT COUNT(*) AS total FROM caseta.usuarios");
     console.log(`Base caseta lista: ${total} usuarios de prueba (contraseña de prueba Caseta2026!).`);

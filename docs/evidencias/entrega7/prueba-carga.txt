@@ -1,0 +1,31 @@
+Caseta · Entrega 7 · Prueba de carga (salida real de la terminal, 2 núcleos, MySQL y los 6 procesos en la misma máquina)
+$ npm run prueba:carga
+
+> node scripts/prueba-carga.js
+
+Prueba de carga · GET http://localhost:3000/api/v1/codigos/3KKEWGB5/validez
+Rol guardia · 2026-11-19T01:06:37.120Z · Node v22.23.4
+
+Fase 1 · 20 rondas de 50 peticiones simultáneas
+  Peticiones                      1000
+  Peticiones por segundo          268
+  Latencia promedio (ms)          137
+  Latencia p50 (ms)               136
+  Latencia p95 (ms)               223
+  Latencia p99 (ms)               248
+  Latencia máxima (ms)            250
+  Respuestas 200 con valido=true  1000
+  Errores o respuestas distintas  0
+
+Fase 2 · 50 clientes sin pausa durante 15 s
+  Peticiones                      5044
+  Peticiones por segundo          334
+  Latencia promedio (ms)          149
+  Latencia p50 (ms)               148
+  Latencia p95 (ms)               207
+  Latencia p99 (ms)               238
+  Latencia máxima (ms)            279
+  Respuestas 200 con valido=true  5044
+  Errores o respuestas distintas  0
+
+RNF04 (p99 < 1000 ms y sin errores en ambas fases): CUMPLE

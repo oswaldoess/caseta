@@ -35,8 +35,9 @@ async function verificarToken(req, res, next) {
   limpiarEncabezados(req);
   if (req.method === "OPTIONS" || esPublica(req)) return next();
 
-  const [esquema, token] = (req.headers.authorization || "").split(" ");
-  if (esquema !== "Bearer" || !token) {
+  // El esquema no distingue mayúsculas (RFC 6750); antes "bearer" se rechazaba (defecto D02).
+  const [esquema, token] = (req.headers.authorization || "").trim().split(/\s+/);
+  if (!esquema || esquema.toLowerCase() !== "bearer" || !token) {
     return next(noValido("Falta el token. Envía el encabezado Authorization: Bearer <token>."));
   }
 

@@ -1,34 +1,40 @@
 openapi: 3.0.3
 info:
   title: Caseta API
-  version: 1.0.0-entrega6
-  description: >-
-    API pública de Caseta, sistema de control de visitas para fraccionamientos privados. Todas las peticiones entran por
-    el API Gateway. Borrador de la Entrega 3 del proyecto integrador de Arquitectura Orientada a Servicios (UPSRJ).
-    Entrega 6: los 33 endpoints están implementados; las reglas de negocio se describen en docs/reglas-negocio.md.
+  version: 1.0.0-entrega7
+  description: |-
+    API pública de Caseta, sistema de control de visitas para fraccionamientos privados. Todas las peticiones entran por el API Gateway en http://localhost:3000/api/v1.
+
+    **Cómo autenticarse.** Inicia sesión con POST /sesiones (todas las cuentas de prueba usan la contraseña Caseta2026!; por ejemplo patricia.gomez@correo.com es administradora, miguel.torres@correo.com es guardia y carlos.ramirez@correo.com es residente). Copia el token de la respuesta y usa el botón Authorize. El token vale 8 horas.
+
+    **Roles.** Cada operación indica en x-roles quién puede usarla. Un rol sin permiso recibe 403; un recurso de otra vivienda responde 404.
+
+    **Errores.** Todos los errores usan el mismo formato (esquema Error); el campo codigo es estable y sirve para decidir qué hacer.
+
+    Las reglas de negocio están en docs/reglas-negocio.md. Proyecto integrador de Arquitectura Orientada a Servicios (UPSRJ).
 servers:
-  - url: http://localhost:3000/api/v1
-    description: API Gateway en el entorno local
+- url: http://localhost:3000/api/v1
+  description: API Gateway en el entorno local
 tags:
-  - name: Identidad
-    description: 'S1: sesiones, usuarios y contraseñas.'
-  - name: Viviendas
-    description: 'S2: viviendas y asignación de residentes.'
-  - name: Visitas
-    description: 'S3: visitas y códigos de acceso.'
-  - name: Accesos
-    description: 'S4: validación de códigos, entradas, salidas e historial.'
-  - name: Reglas y Adeudos
-    description: 'S5: adeudos y parámetros del reglamento.'
-  - name: Sistema
-    description: Estado del sistema.
+- name: Identidad
+  description: 'S1: sesiones, usuarios y contraseñas.'
+- name: Viviendas
+  description: 'S2: viviendas y asignación de residentes.'
+- name: Visitas
+  description: 'S3: visitas y códigos de acceso.'
+- name: Accesos
+  description: 'S4: validación de códigos, entradas, salidas e historial.'
+- name: Reglas y Adeudos
+  description: 'S5: adeudos y parámetros del reglamento.'
+- name: Sistema
+  description: Estado del sistema.
 security:
-  - bearerAuth: []
+- bearerAuth: []
 paths:
   /sesiones:
     post:
       tags:
-        - Identidad
+      - Identidad
       operationId: e01
       summary: Iniciar sesión
       description: Crea una sesión con correo y contraseña y devuelve un token JWT válido por 8 horas.
@@ -84,7 +90,7 @@ paths:
   /sesiones/actual:
     delete:
       tags:
-        - Identidad
+      - Identidad
       operationId: e02
       summary: Cerrar sesión
       description: Revoca el token con el que se hace la petición. A partir de ese momento el token responde 401.
@@ -101,7 +107,7 @@ paths:
   /usuarios/me:
     get:
       tags:
-        - Identidad
+      - Identidad
       operationId: e03
       summary: Consultar mi perfil
       description: Devuelve los datos del usuario dueño del token.
@@ -131,7 +137,7 @@ paths:
   /usuarios/me/contrasena:
     put:
       tags:
-        - Identidad
+      - Identidad
       operationId: e04
       summary: Cambiar mi contraseña
       description: Reemplaza la contraseña del usuario. Requiere la contraseña actual.
@@ -172,7 +178,7 @@ paths:
   /usuarios:
     get:
       tags:
-        - Identidad
+      - Identidad
       operationId: e05
       summary: Listar usuarios
       description: Lista paginada de usuarios con filtros.
@@ -180,30 +186,30 @@ paths:
       x-roles: Administrador
       x-requisitos: RF04
       parameters:
-        - name: rol
-          in: query
-          required: false
-          description: Filtra por rol.
-          schema:
-            type: string
-            enum:
-              - residente
-              - guardia
-              - administrador
-        - name: activo
-          in: query
-          required: false
-          description: Filtra por estado de la cuenta.
-          schema:
-            type: boolean
-        - name: q
-          in: query
-          required: false
-          description: Busca por nombre o correo.
-          schema:
-            type: string
-        - $ref: '#/components/parameters/pagina'
-        - $ref: '#/components/parameters/limite'
+      - name: rol
+        in: query
+        required: false
+        description: Filtra por rol.
+        schema:
+          type: string
+          enum:
+          - residente
+          - guardia
+          - administrador
+      - name: activo
+        in: query
+        required: false
+        description: Filtra por estado de la cuenta.
+        schema:
+          type: boolean
+      - name: q
+        in: query
+        required: false
+        description: Busca por nombre o correo.
+        schema:
+          type: string
+      - $ref: '#/components/parameters/pagina'
+      - $ref: '#/components/parameters/limite'
       responses:
         '200':
           description: Lista de usuarios.
@@ -220,14 +226,14 @@ paths:
                     $ref: '#/components/schemas/Paginacion'
               example:
                 datos:
-                  - id: 52
-                    nombreCompleto: Carlos Ramírez Soto
-                    correo: carlos.ramirez@correo.com
-                    telefono: '4425550101'
-                    rol: residente
-                    activo: true
-                    creadoEn: '2026-10-05T10:12:00-06:00'
-                    actualizadoEn: '2026-10-05T10:12:00-06:00'
+                - id: 52
+                  nombreCompleto: Carlos Ramírez Soto
+                  correo: carlos.ramirez@correo.com
+                  telefono: '4425550101'
+                  rol: residente
+                  activo: true
+                  creadoEn: '2026-10-05T10:12:00-06:00'
+                  actualizadoEn: '2026-10-05T10:12:00-06:00'
                 paginacion:
                   pagina: 1
                   limite: 20
@@ -243,7 +249,7 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
     post:
       tags:
-        - Identidad
+      - Identidad
       operationId: e06
       summary: Crear usuario
       description: Crea una cuenta. No existe autorregistro (RN01).
@@ -303,10 +309,10 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
   /usuarios/{usuarioId}:
     parameters:
-      - $ref: '#/components/parameters/usuarioId'
+    - $ref: '#/components/parameters/usuarioId'
     get:
       tags:
-        - Identidad
+      - Identidad
       operationId: e07
       summary: Consultar usuario
       description: Devuelve un usuario por su identificador.
@@ -329,6 +335,8 @@ paths:
                 activo: true
                 creadoEn: '2026-10-05T10:12:00-06:00'
                 actualizadoEn: '2026-10-05T10:12:00-06:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -339,12 +347,11 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
     patch:
       tags:
-        - Identidad
+      - Identidad
       operationId: e08
       summary: Actualizar o desactivar usuario
-      description: >-
-        Modifica datos de la cuenta. Enviar activo: false la desactiva (baja lógica): el historial se conserva, pero el
-        usuario ya no puede iniciar sesión.
+      description: 'Modifica datos de la cuenta. Enviar activo: false la desactiva (baja lógica): el historial se conserva,
+        pero el usuario ya no puede iniciar sesión.'
       x-endpoint: E08
       x-roles: Administrador
       x-requisitos: RF04
@@ -380,12 +387,27 @@ paths:
           $ref: '#/components/responses/SinPermiso'
         '404':
           $ref: '#/components/responses/NoEncontrado'
+        '409':
+          description: Un administrador intenta desactivarse o quitarse el rol a sí mismo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  codigo: CONFLICTO
+                  mensaje: No puedes desactivar tu propia cuenta ni quitarte el rol de administrador.
+                  estado: 409
+                  detalles: []
+                  ruta: /api/v1/usuarios/1
+                  fecha: '2026-11-18T18:41:00-06:00'
+                  idSolicitud: req_a436b24f
         '500':
           $ref: '#/components/responses/ErrorInterno'
   /viviendas:
     get:
       tags:
-        - Viviendas
+      - Viviendas
       operationId: e09
       summary: Listar viviendas
       description: Lista paginada de viviendas.
@@ -393,20 +415,20 @@ paths:
       x-roles: Administrador
       x-requisitos: RF05
       parameters:
-        - name: q
-          in: query
-          required: false
-          description: Busca por calle o número.
-          schema:
-            type: string
-        - name: activa
-          in: query
-          required: false
-          description: Filtra por estado.
-          schema:
-            type: boolean
-        - $ref: '#/components/parameters/pagina'
-        - $ref: '#/components/parameters/limite'
+      - name: q
+        in: query
+        required: false
+        description: Busca por calle o número.
+        schema:
+          type: string
+      - name: activa
+        in: query
+        required: false
+        description: Filtra por estado.
+        schema:
+          type: boolean
+      - $ref: '#/components/parameters/pagina'
+      - $ref: '#/components/parameters/limite'
       responses:
         '200':
           description: Lista de viviendas.
@@ -423,15 +445,15 @@ paths:
                     $ref: '#/components/schemas/Paginacion'
               example:
                 datos:
-                  - id: 14
-                    calle: Av. de los Fresnos
-                    numero: '214'
-                    referencia: Manzana 3, lote 8
-                    domicilio: Av. de los Fresnos 214
-                    activa: true
-                    totalResidentes: 2
-                    creadaEn: '2026-10-05T09:40:00-06:00'
-                    actualizadaEn: '2026-10-05T09:40:00-06:00'
+                - id: 14
+                  calle: Av. de los Fresnos
+                  numero: '214'
+                  referencia: Manzana 3, lote 8
+                  domicilio: Av. de los Fresnos 214
+                  activa: true
+                  totalResidentes: 2
+                  creadaEn: '2026-10-05T09:40:00-06:00'
+                  actualizadaEn: '2026-10-05T09:40:00-06:00'
                 paginacion:
                   pagina: 1
                   limite: 20
@@ -447,7 +469,7 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
     post:
       tags:
-        - Viviendas
+      - Viviendas
       operationId: e10
       summary: Registrar vivienda
       description: Da de alta una vivienda. Calle y número no pueden repetirse.
@@ -506,10 +528,10 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
   /viviendas/{viviendaId}:
     parameters:
-      - $ref: '#/components/parameters/viviendaId'
+    - $ref: '#/components/parameters/viviendaId'
     get:
       tags:
-        - Viviendas
+      - Viviendas
       operationId: e11
       summary: Consultar vivienda
       description: Devuelve una vivienda. El residente solo puede consultar la suya.
@@ -533,6 +555,8 @@ paths:
                 totalResidentes: 2
                 creadaEn: '2026-10-05T09:40:00-06:00'
                 actualizadaEn: '2026-10-05T09:40:00-06:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -543,7 +567,7 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
     patch:
       tags:
-        - Viviendas
+      - Viviendas
       operationId: e12
       summary: Actualizar o desactivar vivienda
       description: 'Modifica datos de la vivienda. activa: false la desactiva.'
@@ -589,10 +613,10 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
   /viviendas/{viviendaId}/residentes:
     parameters:
-      - $ref: '#/components/parameters/viviendaId'
+    - $ref: '#/components/parameters/viviendaId'
     get:
       tags:
-        - Viviendas
+      - Viviendas
       operationId: e13
       summary: Listar residentes de una vivienda
       description: Residentes asignados a la vivienda.
@@ -613,14 +637,16 @@ paths:
                       $ref: '#/components/schemas/Asignacion'
               example:
                 datos:
-                  - usuarioId: 52
-                    nombreCompleto: Carlos Ramírez Soto
-                    esTitular: true
-                    fechaAlta: '2026-10-05'
-                  - usuarioId: 53
-                    nombreCompleto: Ana Torres Lugo
-                    esTitular: false
-                    fechaAlta: '2026-10-05'
+                - usuarioId: 52
+                  nombreCompleto: Carlos Ramírez Soto
+                  esTitular: true
+                  fechaAlta: '2026-10-05'
+                - usuarioId: 53
+                  nombreCompleto: Ana Torres Lugo
+                  esTitular: false
+                  fechaAlta: '2026-10-05'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -629,9 +655,11 @@ paths:
           $ref: '#/components/responses/NoEncontrado'
         '500':
           $ref: '#/components/responses/ErrorInterno'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
     post:
       tags:
-        - Viviendas
+      - Viviendas
       operationId: e14
       summary: Asignar residente
       description: Asigna un usuario con rol residente a la vivienda (RN02).
@@ -668,9 +696,8 @@ paths:
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
-          description: >-
-            El residente ya está asignado a otra vivienda (RESIDENTE_YA_ASIGNADO), o se pidió esTitular true y la
-            vivienda ya tiene titular (TITULAR_YA_ASIGNADO, agregado en la Entrega 5).
+          description: El residente ya está asignado a otra vivienda (RESIDENTE_YA_ASIGNADO), o se pidió esTitular true y
+            la vivienda ya tiene titular (TITULAR_YA_ASIGNADO, agregado en la Entrega 5).
           content:
             application/json:
               schema:
@@ -696,8 +723,8 @@ paths:
                   mensaje: El usuario 7 no tiene rol de residente.
                   estado: 422
                   detalles:
-                    - campo: usuarioId
-                      mensaje: Debe ser un usuario activo con rol residente.
+                  - campo: usuarioId
+                    mensaje: Debe ser un usuario activo con rol residente.
                   ruta: /api/v1/viviendas/14/residentes
                   fecha: '2026-10-21T16:40:12-06:00'
                   idSolicitud: req_8f3a2c1d
@@ -707,11 +734,11 @@ paths:
           $ref: '#/components/responses/ServicioNoDisponible'
   /viviendas/{viviendaId}/residentes/{usuarioId}:
     parameters:
-      - $ref: '#/components/parameters/viviendaId'
-      - $ref: '#/components/parameters/usuarioId'
+    - $ref: '#/components/parameters/viviendaId'
+    - $ref: '#/components/parameters/usuarioId'
     delete:
       tags:
-        - Viviendas
+      - Viviendas
       operationId: e15
       summary: Retirar residente
       description: Quita la asignación del residente a la vivienda.
@@ -721,6 +748,8 @@ paths:
       responses:
         '204':
           description: Operación realizada; sin contenido.
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -732,7 +761,7 @@ paths:
   /visitas:
     get:
       tags:
-        - Visitas
+      - Visitas
       operationId: e16
       summary: Listar visitas
       description: 'Residente: visitas de su vivienda. Guardia: solo las válidas hoy. Administrador: todas.'
@@ -740,50 +769,50 @@ paths:
       x-roles: Residente; guardia (solo hoy); administrador
       x-requisitos: RF10, RF15
       parameters:
-        - name: estado
-          in: query
-          required: false
-          description: Filtra por estado.
-          schema:
-            type: string
-            enum:
-              - activa
-              - cancelada
-              - utilizada
-              - vencida
-        - name: tipo
-          in: query
-          required: false
-          description: Filtra por tipo.
-          schema:
-            type: string
-            enum:
-              - unica
-              - frecuente
-              - no_programada
-        - name: validaEn
-          in: query
-          required: false
-          description: Solo visitas válidas en esa fecha. Para el guardia siempre es hoy.
-          schema:
-            type: string
-            format: date
-        - $ref: '#/components/parameters/desde'
-        - $ref: '#/components/parameters/hasta'
-        - name: q
-          in: query
-          required: false
-          description: Busca por nombre del visitante o domicilio.
-          schema:
-            type: string
-        - name: viviendaId
-          in: query
-          required: false
-          description: Filtra por vivienda (solo administrador).
-          schema:
-            type: integer
-        - $ref: '#/components/parameters/pagina'
-        - $ref: '#/components/parameters/limite'
+      - name: estado
+        in: query
+        required: false
+        description: Filtra por estado.
+        schema:
+          type: string
+          enum:
+          - activa
+          - cancelada
+          - utilizada
+          - vencida
+      - name: tipo
+        in: query
+        required: false
+        description: Filtra por tipo.
+        schema:
+          type: string
+          enum:
+          - unica
+          - frecuente
+          - no_programada
+      - name: validaEn
+        in: query
+        required: false
+        description: Solo visitas válidas en esa fecha. Para el guardia siempre es hoy.
+        schema:
+          type: string
+          format: date
+      - $ref: '#/components/parameters/desde'
+      - $ref: '#/components/parameters/hasta'
+      - name: q
+        in: query
+        required: false
+        description: Busca por nombre del visitante o domicilio.
+        schema:
+          type: string
+      - name: viviendaId
+        in: query
+        required: false
+        description: Filtra por vivienda (solo administrador).
+        schema:
+          type: integer
+      - $ref: '#/components/parameters/pagina'
+      - $ref: '#/components/parameters/limite'
       responses:
         '200':
           description: Lista de visitas.
@@ -800,46 +829,46 @@ paths:
                     $ref: '#/components/schemas/Paginacion'
               example:
                 datos:
-                  - id: 1287
-                    tipo: unica
-                    estado: activa
-                    codigo: K7P4M2QX
-                    viviendaId: 14
-                    domicilio: Av. de los Fresnos 214
-                    residenteId: 52
-                    nombreVisitante: Laura Méndez Ríos
-                    placas: UMR-482-B
-                    numeroPersonas: 6
-                    fechaInicio: '2026-10-24'
-                    fechaFin: '2026-10-24'
-                    horaInicio: '18:00'
-                    horaFin: '23:00'
-                    diasSemana: []
-                    autorizadoPor: null
-                    tieneEntradas: false
-                    creadaEn: '2026-10-21T16:40:12-06:00'
-                    actualizadaEn: '2026-10-21T16:40:12-06:00'
-                  - id: 1290
-                    tipo: frecuente
-                    estado: activa
-                    codigo: R9HX3TQW
-                    viviendaId: 14
-                    domicilio: Av. de los Fresnos 214
-                    residenteId: 52
-                    nombreVisitante: Rosa Hernández Gil
-                    placas: null
-                    numeroPersonas: 1
-                    fechaInicio: '2026-10-26'
-                    fechaFin: '2027-03-31'
-                    horaInicio: '08:00'
-                    horaFin: '15:00'
-                    diasSemana:
-                      - lunes
-                      - jueves
-                    autorizadoPor: null
-                    tieneEntradas: false
-                    creadaEn: '2026-10-21T16:40:12-06:00'
-                    actualizadaEn: '2026-10-21T16:40:12-06:00'
+                - id: 1287
+                  tipo: unica
+                  estado: activa
+                  codigo: K7P4M2QX
+                  viviendaId: 14
+                  domicilio: Av. de los Fresnos 214
+                  residenteId: 52
+                  nombreVisitante: Laura Méndez Ríos
+                  placas: UMR-482-B
+                  numeroPersonas: 6
+                  fechaInicio: '2026-10-24'
+                  fechaFin: '2026-10-24'
+                  horaInicio: '18:00'
+                  horaFin: '23:00'
+                  diasSemana: []
+                  autorizadoPor: null
+                  tieneEntradas: false
+                  creadaEn: '2026-10-21T16:40:12-06:00'
+                  actualizadaEn: '2026-10-21T16:40:12-06:00'
+                - id: 1290
+                  tipo: frecuente
+                  estado: activa
+                  codigo: R9HX3TQW
+                  viviendaId: 14
+                  domicilio: Av. de los Fresnos 214
+                  residenteId: 52
+                  nombreVisitante: Rosa Hernández Gil
+                  placas: null
+                  numeroPersonas: 1
+                  fechaInicio: '2026-10-26'
+                  fechaFin: '2027-03-31'
+                  horaInicio: 08:00
+                  horaFin: '15:00'
+                  diasSemana:
+                  - lunes
+                  - jueves
+                  autorizadoPor: null
+                  tieneEntradas: false
+                  creadaEn: '2026-10-21T16:40:12-06:00'
+                  actualizadaEn: '2026-10-21T16:40:12-06:00'
                 paginacion:
                   pagina: 1
                   limite: 20
@@ -853,14 +882,15 @@ paths:
           $ref: '#/components/responses/SinPermiso'
         '500':
           $ref: '#/components/responses/ErrorInterno'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
     post:
       tags:
-        - Visitas
+      - Visitas
       operationId: e17
       summary: Registrar visita
-      description: >-
-        Registra una visita única o frecuente para la vivienda del residente y genera su código (RF09). La vivienda se
-        obtiene del token; no se envía.
+      description: Registra una visita única o frecuente para la vivienda del residente y genera su código (RF09). La vivienda
+        se obtiene del token; no se envía.
       x-endpoint: E17
       x-roles: Residente
       x-requisitos: RF07, RF08, RF09
@@ -870,8 +900,8 @@ paths:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/VisitaUnicaCrear'
-                - $ref: '#/components/schemas/VisitaFrecuenteCrear'
+              - $ref: '#/components/schemas/VisitaUnicaCrear'
+              - $ref: '#/components/schemas/VisitaFrecuenteCrear'
               discriminator:
                 propertyName: tipo
                 mapping:
@@ -896,11 +926,11 @@ paths:
                   numeroPersonas: 1
                   fechaInicio: '2026-10-26'
                   fechaFin: '2027-03-31'
-                  horaInicio: '08:00'
+                  horaInicio: 08:00
                   horaFin: '15:00'
                   diasSemana:
-                    - lunes
-                    - jueves
+                  - lunes
+                  - jueves
       responses:
         '201':
           description: Visita creada con su código.
@@ -942,10 +972,10 @@ paths:
           $ref: '#/components/responses/ServicioNoDisponible'
   /visitas/{visitaId}:
     parameters:
-      - $ref: '#/components/parameters/visitaId'
+    - $ref: '#/components/parameters/visitaId'
     get:
       tags:
-        - Visitas
+      - Visitas
       operationId: e18
       summary: Consultar visita
       description: Devuelve una visita. Si pertenece a otra vivienda responde 404.
@@ -979,6 +1009,8 @@ paths:
                 tieneEntradas: false
                 creadaEn: '2026-10-21T16:40:12-06:00'
                 actualizadaEn: '2026-10-21T16:40:12-06:00'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -989,7 +1021,7 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
     patch:
       tags:
-        - Visitas
+      - Visitas
       operationId: e19
       summary: Modificar visita
       description: Cambia datos de la visita mientras no tenga entradas (RN06). Vuelve a aplicar RN03 y RN09.
@@ -1041,7 +1073,8 @@ paths:
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
-          description: La visita ya tiene una entrada registrada o no está activa.
+          description: 'La visita ya tiene entradas (VISITA_CON_ENTRADA) o ya no está activa: cancelada, utilizada o vencida
+            (CONFLICTO).'
           content:
             application/json:
               schema:
@@ -1063,18 +1096,19 @@ paths:
           $ref: '#/components/responses/ServicioNoDisponible'
     delete:
       tags:
-        - Visitas
+      - Visitas
       operationId: e20
       summary: Cancelar visita
-      description: >-
-        Cancela la visita: su código deja de ser válido de inmediato. La visita se conserva con estado cancelada para el
-        historial.
+      description: 'Cancela la visita: su código deja de ser válido de inmediato. La visita se conserva con estado cancelada
+        para el historial.'
       x-endpoint: E20
       x-roles: Residente (solo las suyas)
       x-requisitos: RF11
       responses:
         '204':
           description: Operación realizada; sin contenido.
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -1082,7 +1116,8 @@ paths:
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
-          description: La visita ya tiene entradas o ya estaba cancelada.
+          description: 'La visita ya tiene entradas (VISITA_CON_ENTRADA) o ya no está activa: cancelada, utilizada o vencida
+            (CONFLICTO).'
           content:
             application/json:
               schema:
@@ -1100,10 +1135,10 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
   /codigos/{codigo}/validez:
     parameters:
-      - $ref: '#/components/parameters/codigo'
+    - $ref: '#/components/parameters/codigo'
     get:
       tags:
-        - Accesos
+      - Accesos
       operationId: e21
       summary: Consultar validez de un código
       description: Indica si el código permite la entrada en este momento y, si no, el motivo. No registra nada.
@@ -1178,48 +1213,47 @@ paths:
   /accesos:
     get:
       tags:
-        - Accesos
+      - Accesos
       operationId: e23
       summary: Consultar historial de accesos
-      description: >-
-        Historial del más reciente al más antiguo. Administrador: todo; residente: su vivienda; guardia: solo el día en
-        curso.
+      description: 'Historial del más reciente al más antiguo. Administrador: todo; residente: su vivienda; guardia: solo
+        el día en curso.'
       x-endpoint: E23
       x-roles: Administrador; residente (su vivienda); guardia (hoy)
       x-requisitos: RF20
       parameters:
-        - $ref: '#/components/parameters/desde'
-        - $ref: '#/components/parameters/hasta'
-        - name: viviendaId
-          in: query
-          required: false
-          description: Filtra por vivienda (administrador).
-          schema:
-            type: integer
-        - name: residenteId
-          in: query
-          required: false
-          description: Filtra por residente (administrador).
-          schema:
-            type: integer
-        - name: tipoVisita
-          in: query
-          required: false
-          description: Filtra por tipo de visita.
-          schema:
-            type: string
-            enum:
-              - unica
-              - frecuente
-              - no_programada
-        - name: dentro
-          in: query
-          required: false
-          description: 'true: solo visitas que aún no salen.'
-          schema:
-            type: boolean
-        - $ref: '#/components/parameters/pagina'
-        - $ref: '#/components/parameters/limite'
+      - $ref: '#/components/parameters/desde'
+      - $ref: '#/components/parameters/hasta'
+      - name: viviendaId
+        in: query
+        required: false
+        description: Filtra por vivienda (administrador).
+        schema:
+          type: integer
+      - name: residenteId
+        in: query
+        required: false
+        description: Filtra por residente (administrador).
+        schema:
+          type: integer
+      - name: tipoVisita
+        in: query
+        required: false
+        description: Filtra por tipo de visita.
+        schema:
+          type: string
+          enum:
+          - unica
+          - frecuente
+          - no_programada
+      - name: dentro
+        in: query
+        required: false
+        description: 'true: solo visitas que aún no salen.'
+        schema:
+          type: boolean
+      - $ref: '#/components/parameters/pagina'
+      - $ref: '#/components/parameters/limite'
       responses:
         '200':
           description: Historial.
@@ -1236,19 +1270,19 @@ paths:
                     $ref: '#/components/schemas/Paginacion'
               example:
                 datos:
-                  - id: 9031
-                    visitaId: 1287
-                    tipoVisita: unica
-                    nombreVisitante: Laura Méndez Ríos
-                    numeroPersonas: 6
-                    viviendaId: 14
-                    domicilio: Av. de los Fresnos 214
-                    residenteId: 52
-                    entrada: '2026-10-24T18:07:12-06:00'
-                    guardiaEntradaId: 7
-                    salida: null
-                    guardiaSalidaId: null
-                    observaciones: null
+                - id: 9031
+                  visitaId: 1287
+                  tipoVisita: unica
+                  nombreVisitante: Laura Méndez Ríos
+                  numeroPersonas: 6
+                  viviendaId: 14
+                  domicilio: Av. de los Fresnos 214
+                  residenteId: 52
+                  entrada: '2026-10-24T18:07:12-06:00'
+                  guardiaEntradaId: 7
+                  salida: null
+                  guardiaSalidaId: null
+                  observaciones: null
                 paginacion:
                   pagina: 1
                   limite: 20
@@ -1262,14 +1296,15 @@ paths:
           $ref: '#/components/responses/SinPermiso'
         '500':
           $ref: '#/components/responses/ErrorInterno'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
     post:
       tags:
-        - Accesos
+      - Accesos
       operationId: e22
       summary: Registrar entrada
-      description: >-
-        Registra la entrada de una visita. Se envía un código, o bien los datos de una visita no programada (RF16). La
-        operación crea el acceso y, en Visitas, registra su uso.
+      description: Registra la entrada de una visita. Se envía un código, o bien los datos de una visita no programada (RF16).
+        La operación crea el acceso y, en Visitas, registra su uso.
       x-endpoint: E22
       x-roles: Guardia
       x-requisitos: RF13, RF16
@@ -1279,8 +1314,8 @@ paths:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/AccesoConCodigo'
-                - $ref: '#/components/schemas/AccesoNoProgramado'
+              - $ref: '#/components/schemas/AccesoConCodigo'
+              - $ref: '#/components/schemas/AccesoNoProgramado'
             examples:
               conCodigo:
                 summary: Entrada con código
@@ -1350,8 +1385,8 @@ paths:
                   mensaje: 'El código K7P4M2QX no es válido: la visita fue cancelada.'
                   estado: 422
                   detalles:
-                    - campo: codigo
-                      mensaje: 'motivo: cancelado'
+                  - campo: codigo
+                    mensaje: 'motivo: cancelado'
                   ruta: /api/v1/accesos
                   fecha: '2026-10-21T16:40:12-06:00'
                   idSolicitud: req_8f3a2c1d
@@ -1361,10 +1396,10 @@ paths:
           $ref: '#/components/responses/ServicioNoDisponible'
   /accesos/{accesoId}:
     parameters:
-      - $ref: '#/components/parameters/accesoId'
+    - $ref: '#/components/parameters/accesoId'
     get:
       tags:
-        - Accesos
+      - Accesos
       operationId: e24
       summary: Consultar un acceso
       description: Devuelve un registro de acceso con las mismas restricciones por rol que el historial.
@@ -1392,6 +1427,8 @@ paths:
                 salida: null
                 guardiaSalidaId: null
                 observaciones: null
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -1400,9 +1437,11 @@ paths:
           $ref: '#/components/responses/NoEncontrado'
         '500':
           $ref: '#/components/responses/ErrorInterno'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
     patch:
       tags:
-        - Accesos
+      - Accesos
       operationId: e26
       summary: Agregar observación
       description: Agrega una observación. No se pueden cambiar fechas ni datos del acceso (RN08).
@@ -1450,10 +1489,10 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
   /accesos/{accesoId}/salida:
     parameters:
-      - $ref: '#/components/parameters/accesoId'
+    - $ref: '#/components/parameters/accesoId'
     post:
       tags:
-        - Accesos
+      - Accesos
       operationId: e25
       summary: Registrar salida
       description: Registra la salida del acceso indicado (RN07).
@@ -1488,6 +1527,8 @@ paths:
                 salida: '2026-10-24T22:41:03-06:00'
                 guardiaSalidaId: 9
                 observaciones: null
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -1514,7 +1555,7 @@ paths:
   /adeudos:
     get:
       tags:
-        - Reglas y Adeudos
+      - Reglas y Adeudos
       operationId: e27
       summary: Listar adeudos
       description: Lista paginada de adeudos.
@@ -1522,23 +1563,23 @@ paths:
       x-roles: Administrador
       x-requisitos: RF17, RF18
       parameters:
-        - name: viviendaId
-          in: query
-          required: false
-          description: Filtra por vivienda.
-          schema:
-            type: integer
-        - name: estado
-          in: query
-          required: false
-          description: Filtra por estado.
-          schema:
-            type: string
-            enum:
-              - pendiente
-              - liquidado
-        - $ref: '#/components/parameters/pagina'
-        - $ref: '#/components/parameters/limite'
+      - name: viviendaId
+        in: query
+        required: false
+        description: Filtra por vivienda.
+        schema:
+          type: integer
+      - name: estado
+        in: query
+        required: false
+        description: Filtra por estado.
+        schema:
+          type: string
+          enum:
+          - pendiente
+          - liquidado
+      - $ref: '#/components/parameters/pagina'
+      - $ref: '#/components/parameters/limite'
       responses:
         '200':
           description: Lista de adeudos.
@@ -1555,14 +1596,14 @@ paths:
                     $ref: '#/components/schemas/Paginacion'
               example:
                 datos:
-                  - id: 310
-                    viviendaId: 14
-                    concepto: Cuota de mantenimiento
-                    periodo: 2026-10
-                    monto: 950
-                    estado: pendiente
-                    registradoEn: '2026-10-21T09:00:00-06:00'
-                    liquidadoEn: null
+                - id: 310
+                  viviendaId: 14
+                  concepto: Cuota de mantenimiento
+                  periodo: 2026-10
+                  monto: 950
+                  estado: pendiente
+                  registradoEn: '2026-10-21T09:00:00-06:00'
+                  liquidadoEn: null
                 paginacion:
                   pagina: 1
                   limite: 20
@@ -1578,7 +1619,7 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
     post:
       tags:
-        - Reglas y Adeudos
+      - Reglas y Adeudos
       operationId: e28
       summary: Registrar adeudo
       description: Registra un adeudo pendiente de una vivienda.
@@ -1630,19 +1671,21 @@ paths:
                   mensaje: La vivienda 999 no existe.
                   estado: 422
                   detalles:
-                    - campo: viviendaId
-                      mensaje: Debe ser una vivienda activa.
+                  - campo: viviendaId
+                    mensaje: Debe ser una vivienda activa.
                   ruta: /api/v1/adeudos
                   fecha: '2026-10-21T16:40:12-06:00'
                   idSolicitud: req_8f3a2c1d
         '500':
           $ref: '#/components/responses/ErrorInterno'
+        '503':
+          $ref: '#/components/responses/ServicioNoDisponible'
   /adeudos/{adeudoId}:
     parameters:
-      - $ref: '#/components/parameters/adeudoId'
+    - $ref: '#/components/parameters/adeudoId'
     get:
       tags:
-        - Reglas y Adeudos
+      - Reglas y Adeudos
       operationId: e29
       summary: Consultar adeudo
       description: Devuelve un adeudo.
@@ -1665,6 +1708,8 @@ paths:
                 estado: pendiente
                 registradoEn: '2026-10-21T09:00:00-06:00'
                 liquidadoEn: null
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -1675,7 +1720,7 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
     patch:
       tags:
-        - Reglas y Adeudos
+      - Reglas y Adeudos
       operationId: e30
       summary: Liquidar adeudo
       description: Cambia el estado del adeudo a liquidado.
@@ -1734,7 +1779,7 @@ paths:
   /parametros:
     get:
       tags:
-        - Reglas y Adeudos
+      - Reglas y Adeudos
       operationId: e31
       summary: Listar parámetros del reglamento
       description: Devuelve los parámetros configurables.
@@ -1755,18 +1800,18 @@ paths:
                       $ref: '#/components/schemas/Parametro'
               example:
                 datos:
-                  - clave: limite_personas_con_adeudo
-                    valor: 10
-                    descripcion: Personas por día para viviendas con adeudo pendiente.
-                    minimo: 1
-                    maximo: 50
-                    actualizadoEn: '2026-10-05T09:00:00-06:00'
-                  - clave: tolerancia_minutos
-                    valor: 15
-                    descripcion: Minutos de tolerancia antes y después del horario.
-                    minimo: 0
-                    maximo: 60
-                    actualizadoEn: '2026-10-05T09:00:00-06:00'
+                - clave: limite_personas_con_adeudo
+                  valor: 10
+                  descripcion: Personas por día para viviendas con adeudo pendiente.
+                  minimo: 1
+                  maximo: 50
+                  actualizadoEn: '2026-10-05T09:00:00-06:00'
+                - clave: tolerancia_minutos
+                  valor: 15
+                  descripcion: Minutos de tolerancia antes y después del horario.
+                  minimo: 0
+                  maximo: 60
+                  actualizadoEn: '2026-10-05T09:00:00-06:00'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
@@ -1775,10 +1820,10 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
   /parametros/{clave}:
     parameters:
-      - $ref: '#/components/parameters/clave'
+    - $ref: '#/components/parameters/clave'
     put:
       tags:
-        - Reglas y Adeudos
+      - Reglas y Adeudos
       operationId: e32
       summary: Modificar parámetro
       description: Reemplaza el valor de un parámetro dentro de su rango.
@@ -1820,7 +1865,7 @@ paths:
   /health:
     get:
       tags:
-        - Sistema
+      - Sistema
       operationId: e33
       summary: Consultar estado del sistema
       description: El gateway consulta /health de cada servicio y resume el resultado.
@@ -1869,7 +1914,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 'Token obtenido en POST /sesiones. Se envía como Authorization: Bearer <token>.'
+      description: Token obtenido en POST /sesiones. En Swagger UI pégalo en Authorize sin la palabra Bearer.
   parameters:
     pagina:
       name: pagina
@@ -1938,13 +1983,13 @@ components:
       schema:
         type: string
         enum:
-          - limite_personas_con_adeudo
-          - tolerancia_minutos
+        - limite_personas_con_adeudo
+        - tolerancia_minutos
     codigo:
       name: codigo
       in: path
       required: true
-      description: Código de acceso de 8 caracteres.
+      description: Código de acceso de 8 caracteres. Se aceptan minúsculas; el servidor las convierte.
       schema:
         type: string
         pattern: ^[A-HJ-NP-Z2-9]{8}$
@@ -1968,18 +2013,18 @@ components:
     Error:
       type: object
       required:
-        - error
+      - error
       properties:
         error:
           type: object
           required:
-            - codigo
-            - mensaje
-            - estado
-            - detalles
-            - ruta
-            - fecha
-            - idSolicitud
+          - codigo
+          - mensaje
+          - estado
+          - detalles
+          - ruta
+          - fecha
+          - idSolicitud
           properties:
             codigo:
               type: string
@@ -2009,8 +2054,8 @@ components:
     DetalleError:
       type: object
       required:
-        - campo
-        - mensaje
+      - campo
+      - mensaje
       properties:
         campo:
           type: string
@@ -2021,10 +2066,10 @@ components:
     Paginacion:
       type: object
       required:
-        - pagina
-        - limite
-        - total
-        - totalPaginas
+      - pagina
+      - limite
+      - total
+      - totalPaginas
       properties:
         pagina:
           type: integer
@@ -2041,8 +2086,8 @@ components:
     SesionCrear:
       type: object
       required:
-        - correo
-        - contrasena
+      - correo
+      - contrasena
       properties:
         correo:
           type: string
@@ -2056,10 +2101,10 @@ components:
     Sesion:
       type: object
       required:
-        - token
-        - tipo
-        - expiraEn
-        - usuario
+      - token
+      - tipo
+      - expiraEn
+      - usuario
       properties:
         token:
           type: string
@@ -2068,7 +2113,7 @@ components:
           type: string
           description: Tipo de token.
           enum:
-            - Bearer
+          - Bearer
         expiraEn:
           type: integer
           description: Segundos de vigencia (8 horas).
@@ -2087,9 +2132,9 @@ components:
           type: string
           description: Rol.
           enum:
-            - residente
-            - guardia
-            - administrador
+          - residente
+          - guardia
+          - administrador
     Usuario:
       type: object
       properties:
@@ -2110,9 +2155,9 @@ components:
           type: string
           description: Rol.
           enum:
-            - residente
-            - guardia
-            - administrador
+          - residente
+          - guardia
+          - administrador
         activo:
           type: boolean
           description: Si puede iniciar sesión.
@@ -2127,11 +2172,11 @@ components:
     UsuarioCrear:
       type: object
       required:
-        - nombreCompleto
-        - correo
-        - telefono
-        - rol
-        - contrasenaInicial
+      - nombreCompleto
+      - correo
+      - telefono
+      - rol
+      - contrasenaInicial
       properties:
         nombreCompleto:
           type: string
@@ -2150,9 +2195,9 @@ components:
           type: string
           description: Rol.
           enum:
-            - residente
-            - guardia
-            - administrador
+          - residente
+          - guardia
+          - administrador
         contrasenaInicial:
           type: string
           description: Contraseña inicial que el usuario cambiará después.
@@ -2175,17 +2220,17 @@ components:
           type: string
           description: Rol.
           enum:
-            - residente
-            - guardia
-            - administrador
+          - residente
+          - guardia
+          - administrador
         activo:
           type: boolean
           description: false desactiva la cuenta; true la reactiva.
     CambioContrasena:
       type: object
       required:
-        - contrasenaActual
-        - contrasenaNueva
+      - contrasenaActual
+      - contrasenaNueva
       properties:
         contrasenaActual:
           type: string
@@ -2232,8 +2277,8 @@ components:
     ViviendaCrear:
       type: object
       required:
-        - calle
-        - numero
+      - calle
+      - numero
       properties:
         calle:
           type: string
@@ -2283,7 +2328,7 @@ components:
     AsignacionCrear:
       type: object
       required:
-        - usuarioId
+      - usuarioId
       properties:
         usuarioId:
           type: integer
@@ -2302,17 +2347,17 @@ components:
           type: string
           description: Tipo de visita.
           enum:
-            - unica
-            - frecuente
-            - no_programada
+          - unica
+          - frecuente
+          - no_programada
         estado:
           type: string
           description: Estado.
           enum:
-            - activa
-            - cancelada
-            - utilizada
-            - vencida
+          - activa
+          - cancelada
+          - utilizada
+          - vencida
         codigo:
           type: string
           description: Código de acceso de 8 caracteres (null en no programadas).
@@ -2360,13 +2405,13 @@ components:
           items:
             type: string
             enum:
-              - lunes
-              - martes
-              - miercoles
-              - jueves
-              - viernes
-              - sabado
-              - domingo
+            - lunes
+            - martes
+            - miercoles
+            - jueves
+            - viernes
+            - sabado
+            - domingo
           description: Días válidos (solo frecuentes).
         autorizadoPor:
           type: string
@@ -2386,18 +2431,18 @@ components:
     VisitaUnicaCrear:
       type: object
       required:
-        - tipo
-        - nombreVisitante
-        - numeroPersonas
-        - fecha
-        - horaInicio
-        - horaFin
+      - tipo
+      - nombreVisitante
+      - numeroPersonas
+      - fecha
+      - horaInicio
+      - horaFin
       properties:
         tipo:
           type: string
           description: Debe ser unica.
           enum:
-            - unica
+          - unica
         nombreVisitante:
           type: string
           description: Nombre del visitante.
@@ -2425,20 +2470,20 @@ components:
     VisitaFrecuenteCrear:
       type: object
       required:
-        - tipo
-        - nombreVisitante
-        - numeroPersonas
-        - fechaInicio
-        - fechaFin
-        - horaInicio
-        - horaFin
-        - diasSemana
+      - tipo
+      - nombreVisitante
+      - numeroPersonas
+      - fechaInicio
+      - fechaFin
+      - horaInicio
+      - horaFin
+      - diasSemana
       properties:
         tipo:
           type: string
           description: Debe ser frecuente.
           enum:
-            - frecuente
+          - frecuente
         nombreVisitante:
           type: string
           description: Nombre del visitante.
@@ -2473,13 +2518,13 @@ components:
           items:
             type: string
             enum:
-              - lunes
-              - martes
-              - miercoles
-              - jueves
-              - viernes
-              - sabado
-              - domingo
+            - lunes
+            - martes
+            - miercoles
+            - jueves
+            - viernes
+            - sabado
+            - domingo
     VisitaActualizar:
       type: object
       minProperties: 1
@@ -2516,13 +2561,13 @@ components:
           items:
             type: string
             enum:
-              - lunes
-              - martes
-              - miercoles
-              - jueves
-              - viernes
-              - sabado
-              - domingo
+            - lunes
+            - martes
+            - miercoles
+            - jueves
+            - viernes
+            - sabado
+            - domingo
     Validez:
       type: object
       properties:
@@ -2536,14 +2581,14 @@ components:
           type: string
           description: Motivo si no es válido.
           enum:
-            - cancelado
-            - vencido
-            - aun_no_vigente
-            - dia_no_permitido
-            - fuera_de_horario
-            - ya_utilizado
-            - ya_dentro
-            - null
+          - cancelado
+          - vencido
+          - aun_no_vigente
+          - dia_no_permitido
+          - fuera_de_horario
+          - ya_utilizado
+          - ya_dentro
+          - null
           nullable: true
         mensaje:
           type: string
@@ -2579,7 +2624,7 @@ components:
     AccesoConCodigo:
       type: object
       required:
-        - codigo
+      - codigo
       properties:
         codigo:
           type: string
@@ -2592,15 +2637,15 @@ components:
     AccesoNoProgramado:
       type: object
       required:
-        - visitaNoProgramada
+      - visitaNoProgramada
       properties:
         visitaNoProgramada:
           type: object
           required:
-            - viviendaId
-            - nombreVisitante
-            - numeroPersonas
-            - autorizadoPor
+          - viviendaId
+          - nombreVisitante
+          - numeroPersonas
+          - autorizadoPor
           properties:
             viviendaId:
               type: integer
@@ -2681,7 +2726,7 @@ components:
     AccesoActualizar:
       type: object
       required:
-        - observaciones
+      - observaciones
       properties:
         observaciones:
           type: string
@@ -2710,8 +2755,8 @@ components:
           type: string
           description: Estado.
           enum:
-            - pendiente
-            - liquidado
+          - pendiente
+          - liquidado
         registradoEn:
           type: string
           description: Alta.
@@ -2724,10 +2769,10 @@ components:
     AdeudoCrear:
       type: object
       required:
-        - viviendaId
-        - concepto
-        - periodo
-        - monto
+      - viviendaId
+      - concepto
+      - periodo
+      - monto
       properties:
         viviendaId:
           type: integer
@@ -2747,13 +2792,13 @@ components:
     AdeudoActualizar:
       type: object
       required:
-        - estado
+      - estado
       properties:
         estado:
           type: string
           description: Solo se permite liquidado.
           enum:
-            - liquidado
+          - liquidado
     Parametro:
       type: object
       properties:
@@ -2779,7 +2824,7 @@ components:
     ParametroActualizar:
       type: object
       required:
-        - valor
+      - valor
       properties:
         valor:
           type: integer
@@ -2791,8 +2836,8 @@ components:
           type: string
           description: ok si todos los servicios responden; degradado si alguno falla.
           enum:
-            - ok
-            - degradado
+          - ok
+          - degradado
         version:
           type: string
           description: Versión de la API.
@@ -2805,8 +2850,8 @@ components:
           additionalProperties:
             type: string
             enum:
-              - ok
-              - sin_respuesta
+            - ok
+            - sin_respuesta
   responses:
     SolicitudInvalida:
       description: Datos con formato o valores no válidos.
@@ -2820,13 +2865,14 @@ components:
               mensaje: Algunos campos no son válidos.
               estado: 400
               detalles:
-                - campo: horaFin
-                  mensaje: Debe ser posterior a horaInicio.
+              - campo: horaFin
+                mensaje: Debe ser posterior a horaInicio.
               ruta: /api/v1/visitas
               fecha: '2026-10-21T16:40:12-06:00'
               idSolicitud: req_8f3a2c1d
     NoAutenticado:
-      description: Falta el token, es inválido, expiró o fue revocado.
+      description: Falta el token, es falso, se cerró la sesión o la cuenta se desactivó (TOKEN_INVALIDO); o pasaron más de
+        8 horas (TOKEN_EXPIRADO).
       content:
         application/json:
           schema:

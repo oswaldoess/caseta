@@ -9,11 +9,26 @@ const { verificarToken } = require("./autenticacion");
 
 const app = express();
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGEN || "http://localhost:5173" }));
+// CORS: solo los orígenes de CORS_ORIGEN (separados por coma) reciben los encabezados de CORS.
+// Un origen que no está en la lista no recibe Access-Control-Allow-Origin y el navegador bloquea la respuesta.
+const origenes = (process.env.CORS_ORIGEN || "http://localhost:5173").split(",").map((o) => o.trim()).filter(Boolean);
+app.use(cors({
+  origin: (origen, listo) => listo(null, !origen || origenes.includes(origen) ? origen || false : false),
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Authorization", "Content-Type", "X-Request-Id"],
+  exposedHeaders: ["Location", "X-Request-Id"],
+  maxAge: 600,
+}));
+
+// Documentación interactiva de la API (Swagger UI) generada desde docs/api/openapi.yaml. Es pública.
+app.use("/api/docs", require("./documentacion"));
 
 // Cada petición recibe un identificador que viaja a los servicios (X-Request-Id).
+// Solo se acepta el que manda el cliente si es seguro para los registros (defecto D03).
+const ID_VALIDO = /^[A-Za-z0-9_-]{1,64}$/;
 app.use((req, res, next) => {
-  req.headers["x-request-id"] = req.headers["x-request-id"] || "req_" + crypto.randomBytes(4).toString("hex");
+  const recibido = req.headers["x-request-id"];
+  req.headers["x-request-id"] = recibido && ID_VALIDO.test(recibido) ? recibido : "req_" + crypto.randomBytes(4).toString("hex");
   res.setHeader("X-Request-Id", req.headers["x-request-id"]);
   next();
 });
@@ -30,7 +45,7 @@ app.get("/api/v1/health", async (req, res) => {
     }
   }));
   const todoBien = Object.values(servicios).every((e) => e === "ok");
-  res.status(todoBien ? 200 : 503).json({ estado: todoBien ? "ok" : "degradado", version: "1.0.0", fecha: fechaLocal(), servicios });
+  res.status(todoBien ? 200 : 503).json({ estado: todoBien ? "ok" : "degradado", version: require("../package.json").version, fecha: fechaLocal(), servicios });
 });
 
 // Verificación del token JWT y de su revocación (Entrega 6). Deja pasar solo las rutas públicas.

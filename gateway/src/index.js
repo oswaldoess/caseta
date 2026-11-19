@@ -1,4 +1,5 @@
 require("dotenv").config();
+require("@caseta/shared").verificarConfiguracion("gateway", ["JWT_SECRET", "CLAVE_SERVICIO"]);
 const app = require("./app");
 
 const puerto = Number(process.env.PORT) || 3000;

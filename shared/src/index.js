@@ -7,4 +7,5 @@ module.exports = {
   ...require("./internos"),
   ...require("./salud"),
   ...require("./autorizacion"),
+  ...require("./configuracion"),
 };

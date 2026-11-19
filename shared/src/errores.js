@@ -38,6 +38,14 @@ function manejadorErrores(err, req, res, next) {
   if (err.type === "entity.parse.failed") {
     return res.status(400).json(cuerpoError(req, 400, "VALIDACION_FALLIDA", "El cuerpo de la petición no es un JSON válido."));
   }
+  // Entrega 7 (defecto D01): un cuerpo de más de 100 KB respondía 500; ahora responde 413.
+  if (err.type === "entity.too.large") {
+    return res.status(413).json(cuerpoError(req, 413, "VALIDACION_FALLIDA", "El cuerpo de la petición supera el máximo de 100 KB."));
+  }
+  // Otros errores de lectura del cuerpo (codificación o juego de caracteres no soportados).
+  if (err.expose && err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json(cuerpoError(req, err.status, "VALIDACION_FALLIDA", "No se pudo leer el cuerpo de la petición."));
+  }
   console.error(`[${req.headers["x-request-id"] || "sin-id"}]`, err);
   return res.status(500).json(cuerpoError(req, 500, "ERROR_INTERNO", "Ocurrió un error inesperado. Inténtalo más tarde."));
 }

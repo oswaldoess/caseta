@@ -1,0 +1,64 @@
+Caseta · Entrega 7 · Despliegue reproducible en modo producción desde un clon limpio (salida real de la terminal)
+Máquina: Linux, Node v22.23.4, MySQL 8.0.46-0ubuntu0.24.04.4
+
+$ git clone https://github.com/oswaldoess/caseta.git && cd caseta
+Rama: feature/entrega7-calidad (código de la Entrega 7)
+$ npm ci --omit=dev
+found 0 vulnerabilities
+$ npm run setup:env
+Creado gateway/.env
+Creado services/accesos/.env
+Creado services/identidad/.env
+Creado services/reglas/.env
+Creado services/visitas/.env
+Creado services/viviendas/.env
+# Se edita cada .env: NODE_ENV=production y una DB_PASSWORD propia por servicio (JWT_SECRET y CLAVE_SERVICIO ya son aleatorios)
+$ grep -c "cambiar_" gateway/.env services/*/.env
+gateway/.env:0
+services/accesos/.env:0
+services/identidad/.env:0
+services/reglas/.env:0
+services/visitas/.env:0
+services/viviendas/.env:0
+$ # JWT_SECRET generado por setup:env (se muestran solo los primeros 6 caracteres)
+gateway/.env            JWT_SECRET=WBpg8K… (64 caracteres)
+services/identidad/.env JWT_SECRET=WBpg8K… (64 caracteres)
+Iguales: sí
+$ npm run db:crear
+✔ 01_esquema.sql
+✔ 02_datos_prueba.sql
+✔ 04_usuarios_servicios.sql
+✔ contraseña de caseta_accesos tomada de services/accesos/.env
+✔ contraseña de caseta_identidad tomada de services/identidad/.env
+✔ contraseña de caseta_reglas tomada de services/reglas/.env
+✔ contraseña de caseta_visitas tomada de services/visitas/.env
+✔ contraseña de caseta_viviendas tomada de services/viviendas/.env
+Base caseta lista: 11 usuarios de prueba (contraseña de prueba Caseta2026!).
+$ npm start   (seis procesos con NODE_ENV=production)
+$ curl http://localhost:3000/api/v1/health
+{
+    "estado": "ok",
+    "version": "0.7.0",
+    "fecha": "2026-11-18T19:11:36-06:00",
+    "servicios": {
+        "identidad": "ok",
+        "viviendas": "ok",
+        "visitas": "ok",
+        "accesos": "ok",
+        "reglas": "ok"
+    }
+}
+
+$ npx newman run docs/postman/Caseta_Entrega6.postman_collection.json
+│                requests │               118 │                0 │
+│              assertions │               258 │                0 │
+│ average response time: 21ms [min: 3ms, max: 161ms, s.d.: 27ms] │
+
+$ npm run prueba:carga
+Fase 1 · 20 rondas de 50 peticiones simultáneas
+  Latencia p99 (ms)               341
+  Errores o respuestas distintas  0
+Fase 2 · 50 clientes sin pausa durante 15 s
+  Latencia p99 (ms)               336
+  Errores o respuestas distintas  0
+RNF04 (p99 < 1000 ms y sin errores en ambas fases): CUMPLE
