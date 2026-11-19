@@ -5,6 +5,7 @@ const cors = require("cors");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 const { rutaNoEncontrada, manejadorErrores, cuerpoError, fechaLocal } = require("@caseta/shared");
 const rutas = require("./rutas");
+const { verificarToken } = require("./autenticacion");
 
 const app = express();
 app.use(helmet());
@@ -32,7 +33,8 @@ app.get("/api/v1/health", async (req, res) => {
   res.status(todoBien ? 200 : 503).json({ estado: todoBien ? "ok" : "degradado", version: "1.0.0", fecha: fechaLocal(), servicios });
 });
 
-// Aquí se agregará la verificación del token y de su revocación (Entrega 6).
+// Verificación del token JWT y de su revocación (Entrega 6). Deja pasar solo las rutas públicas.
+app.use(verificarToken);
 
 // Reenvío de cada prefijo a su servicio. Si el servicio no responde, se devuelve 503.
 for (const { url, prefijos } of rutas()) {
@@ -40,6 +42,7 @@ for (const { url, prefijos } of rutas()) {
     target: url,
     pathFilter: prefijos,
     proxyTimeout: 3000,
+    xfwd: true, // agrega X-Forwarded-For para que Identidad limite los intentos de inicio de sesión por IP
     on: {
       error: (err, req, res) => {
         if (!res.headersSent) {

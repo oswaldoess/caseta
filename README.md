@@ -21,19 +21,19 @@ Todas las peticiones entran por el **API Gateway** (`/api/v1`) y se reenvían a 
 
 | Servicio | Carpeta | Puerto | Responsabilidad |
 |---|---|---|---|
-| API Gateway | `gateway/` | 3000 | Punto único de entrada, enrutamiento, CORS, estado del sistema |
+| API Gateway | `gateway/` | 3000 | Punto único de entrada, verificación del token, enrutamiento, CORS, estado del sistema |
 | S1. Identidad | `services/identidad/` | 3001 | Usuarios, roles, sesiones y tokens |
 | S2. Viviendas | `services/viviendas/` | 3002 | Viviendas y asignación de residentes |
 | S3. Visitas | `services/visitas/` | 3003 | Visitas y códigos de acceso |
 | S4. Accesos | `services/accesos/` | 3004 | Validación de códigos, entradas, salidas e historial |
 | S5. Reglas y Adeudos | `services/reglas/` | 3005 | Adeudos y parámetros del reglamento |
 
-Cada servicio sigue la misma estructura: `src/routes`, `src/controllers`, `src/services`, `src/repositories` y `src/middlewares`. El código común (formato estándar de errores) está en `shared/`.
+Cada servicio sigue la misma estructura en capas (ver *Estructura de un servicio*). El código común está en `shared/`.
 
 ## Requisitos
 
 - Node.js 24 LTS (también funciona con Node.js 22)
-- MySQL 8.0 u 8.4 corriendo en `localhost:3306`
+- MySQL 8.0 u 8.4 (en `localhost:3306`; si usas otro puerto, cambia `DB_PORT` en los `.env` de `services/` y crea la base con `DB_PORT=3307 npm run db:crear`, o en PowerShell `$env:DB_PORT=3307; npm run db:crear`)
 - Git
 - Postman (para probar la colección)
 
@@ -48,44 +48,99 @@ npm run db:crear     # 3. crea la base caseta, los datos de prueba y un usuario 
 npm run dev          # 4. levanta el gateway y los cinco servicios
 ```
 
+- `npm run setup:env` también sirve después de un `git pull`: agrega a tus `.env` las variables nuevas sin cambiar las que ya tienes (por ejemplo, un `DB_PORT=3307`).
 - `npm run db:crear` pide la contraseña de `root` de MySQL y ejecuta `01_esquema.sql`, `02_datos_prueba.sql` y `04_usuarios_servicios.sql`. Se puede repetir para dejar la base como nueva. Si prefieres la terminal de MySQL o Workbench, los mismos scripts están en `database/`.
 - Para comprobar que todo funciona, abre http://localhost:3000/api/v1/health. Debe responder `"estado": "ok"` con los cinco servicios. Cada servicio revisa también su conexión a MySQL en su propio `/health` (por ejemplo http://localhost:3002/health).
 - Para levantar un solo servicio: `npm run dev -w services/viviendas`.
 
 Si un servicio no conecta a MySQL, revisa que `DB_USER` y `DB_PASSWORD` de su `.env` coincidan con los de `database/04_usuarios_servicios.sql`.
 
+### Cuentas de prueba
+
+Todas usan la contraseña `Caseta2026!`.
+
+| Rol | Correo | Vivienda |
+|---|---|---|
+| Administrador | `patricia.gomez@correo.com` | — |
+| Guardia | `miguel.torres@correo.com` (también `ricardo.nunez@…`, `sandra.aguilar@…`) | — |
+| Residente | `carlos.ramirez@correo.com` | Av. de los Fresnos 214 (vivienda 1) |
+| Residente | `monica.herrera@correo.com` | Calle Encino 15 (vivienda 3) |
+| Residente con adeudo pendiente | `fernando.ortega@correo.com` | Av. de los Fresnos 218 (vivienda 2) |
+| Cuenta desactivada | `jorge.medina@correo.com` | — |
+
 ### Probar con Postman
 
-1. Importa `docs/postman/Caseta_Entrega5.postman_collection.json` (Import → File).
-2. Con los servicios levantados, abre la colección y usa **Run collection**. Las 37 peticiones tienen pruebas automáticas (84 verificaciones).
-3. La colección se puede correr varias veces sin reiniciar la base: cada corrida crea un correo y un domicilio nuevos.
+1. Importa `docs/postman/Caseta_Entrega6.postman_collection.json` (Import → File).
+2. Con los servicios levantados, usa **Run collection** con el orden que trae. Las primeras peticiones inician sesión con cada rol y guardan los tokens; no hay que copiar nada a mano.
+3. Son 118 peticiones con 258 verificaciones automáticas; 56 son casos negativos (401, 403, 404, 409, 422, 400).
+4. La colección se puede correr varias veces sin reiniciar la base: crea correos, domicilios y visitas nuevos en cada corrida, y calcula la fecha y el horario de hoy en la hora de la Ciudad de México.
 
-También se puede correr desde la terminal: `npx newman run docs/postman/Caseta_Entrega5.postman_collection.json`.
+Desde la terminal: `npx newman run docs/postman/Caseta_Entrega6.postman_collection.json`.
 
-### Qué está implementado (Entrega 5)
+Para probar una petición suelta en Postman, primero corre la carpeta **0. Estado del sistema e inicio de sesión** (guarda los tokens).
+
+### Autenticación y permisos (Entrega 6)
+
+1. `POST /sesiones` con correo y contraseña devuelve un token JWT que vale 8 horas.
+2. Cada petición manda `Authorization: Bearer <token>`. El **gateway** revisa la firma y la vigencia, y pregunta a Identidad (ruta interna I01) si el token se cerró o si la cuenta se desactivó.
+3. Si todo está bien, el gateway reenvía la petición con la identidad del usuario (`X-Usuario-Id`, `X-Usuario-Rol`) y la clave de servicio. Los encabezados que mande el cliente con esos nombres se borran.
+4. Cada servicio decide qué puede hacer cada rol (`permitir(...)` en sus rutas) y qué datos ve: el residente solo los de su vivienda y el guardia solo los del día. Un servicio rechaza cualquier petición que no venga del gateway.
+
+Rutas públicas: `POST /sesiones` y `GET /health`. Seis intentos fallidos de inicio de sesión en un minuto responden `429`.
+
+### Flujo completo
+
+```
+Residente: POST /sesiones -> POST /visitas (Visitas pide a Viviendas su vivienda y a Reglas si aplica el límite por adeudo)
+Guardia:   POST /sesiones -> GET /codigos/{codigo}/validez -> POST /accesos (transacción: acceso en Accesos + uso del código en Visitas)
+Residente: GET /accesos?dentro=true           Guardia: POST /accesos/{accesoId}/salida
+```
+
+### Qué está implementado
 
 Todas las rutas se consumen por el gateway en `http://localhost:3000/api/v1`.
 
-| Endpoint | Operación | Servicio |
+| Endpoint | Operación | Roles |
 |---|---|---|
-| `GET /usuarios` | E05 Listar usuarios (filtros `rol`, `activo`, `q`, paginación) | S1 |
-| `POST /usuarios` | E06 Crear usuario (contraseña con bcrypt) | S1 |
-| `GET /usuarios/{usuarioId}` | E07 Consultar usuario | S1 |
-| `PATCH /usuarios/{usuarioId}` | E08 Actualizar o desactivar usuario | S1 |
-| `GET /viviendas` | E09 Listar viviendas (filtros `activa`, `q`, paginación) | S2 |
-| `POST /viviendas` | E10 Registrar vivienda | S2 |
-| `GET /viviendas/{viviendaId}` | E11 Consultar vivienda | S2 |
-| `PATCH /viviendas/{viviendaId}` | E12 Actualizar o desactivar vivienda | S2 |
-| `GET /viviendas/{viviendaId}/residentes` | E13 Listar residentes | S2 → S1 |
-| `POST /viviendas/{viviendaId}/residentes` | E14 Asignar residente | S2 → S1 |
-| `DELETE /viviendas/{viviendaId}/residentes/{usuarioId}` | E15 Retirar residente | S2 |
-| `GET /health` | E33 Estado del sistema | Gateway |
+| `POST /sesiones` | E01 Iniciar sesión | Público |
+| `DELETE /sesiones/actual` | E02 Cerrar sesión | Todos |
+| `GET /usuarios/me` | E03 Consultar mi perfil | Todos |
+| `PUT /usuarios/me/contrasena` | E04 Cambiar mi contraseña | Todos |
+| `GET, POST /usuarios` · `GET, PATCH /usuarios/{id}` | E05 a E08 Usuarios | Administrador |
+| `GET, POST /viviendas` · `PATCH /viviendas/{id}` | E09, E10, E12 Viviendas | Administrador |
+| `GET /viviendas/{id}` | E11 Consultar vivienda | Administrador; residente (solo la suya) |
+| `GET, POST /viviendas/{id}/residentes` · `DELETE …/{usuarioId}` | E13 a E15 Residentes | Administrador |
+| `GET /visitas` | E16 Listar visitas (filtros `estado`, `tipo`, `validaEn`, `desde`, `hasta`, `q`, paginación) | Residente; guardia (solo hoy); administrador |
+| `POST /visitas` | E17 Registrar visita única o frecuente | Residente |
+| `GET /visitas/{id}` | E18 Consultar visita | Residente (solo las suyas); administrador |
+| `PATCH /visitas/{id}` · `DELETE /visitas/{id}` | E19 Modificar · E20 Cancelar | Residente (solo las suyas) |
+| `GET /codigos/{codigo}/validez` | E21 Validez de un código | Guardia |
+| `POST /accesos` | E22 Registrar entrada (con código o no programada) | Guardia |
+| `GET /accesos` · `GET /accesos/{id}` | E23 Historial · E24 Consultar acceso | Administrador; residente (su vivienda); guardia (hoy) |
+| `POST /accesos/{id}/salida` | E25 Registrar salida | Guardia |
+| `PATCH /accesos/{id}` | E26 Agregar observación | Guardia; administrador |
+| `GET, POST /adeudos` · `GET, PATCH /adeudos/{id}` | E27 a E30 Adeudos | Administrador |
+| `GET /parametros` · `PUT /parametros/{clave}` | E31, E32 Parámetros del reglamento | Administrador |
+| `GET /health` | E33 Estado del sistema | Público |
 
-Ruta interna nueva: `GET /internal/v1/usuarios/{usuarioId}` (I02) en S1, protegida con `X-Clave-Servicio`; no se publica en el gateway.
+Rutas internas (`/internal/v1`, no pasan por el gateway y exigen `X-Clave-Servicio`):
 
-Usuarios y viviendas no se borran: se desactivan con `PATCH` (`activo: false` / `activa: false`), como se definió en la Entrega 3. El borrado físico existe solo donde el diseño lo indica (retirar un residente).
+| ID | Ruta | Servicio | Quién la usa |
+|---|---|---|---|
+| I01 | `GET /tokens-revocados/{jti}?usuarioId=` | S1 | Gateway: ¿el token se cerró o la cuenta se desactivó? |
+| I02 | `GET /usuarios/{usuarioId}` | S1 | Viviendas: ¿existe, está activo y es residente? |
+| I03 | `GET /residentes/{usuarioId}/vivienda` | S2 | Visitas y Accesos: vivienda del residente |
+| I04 | `POST /evaluaciones-limite` | S5 | Visitas: regla del límite por adeudo (RN03) |
+| I05 | `GET /parametros/{clave}` | S5 | Accesos: tolerancia de horario |
+| I06 | `GET /visitas?codigo=` | S3 | Accesos: visita de un código |
+| I07 | `POST /visitas/{visitaId}/usos` | S3 | Accesos: registrar el uso del código |
+| I08 | `POST /visitas` | S3 | Accesos: crear una visita no programada |
+| I09 | `GET /viviendas/{viviendaId}` | S2 | Visitas y Reglas: ¿la vivienda existe y está activa? (nueva) |
+| I10 | `POST /visitas/{visitaId}/anulacion` | S3 | Accesos: anular una visita no programada si la entrada falla (nueva) |
 
-La autenticación con JWT y los permisos por rol se agregan en la Entrega 6; por ahora las rutas no piden token.
+Las reglas de negocio implementadas están en `docs/reglas-negocio.md`.
+
+Usuarios y viviendas no se borran: se desactivan con `PATCH`. Las visitas tampoco: se cancelan y quedan en el historial.
 
 ### Estructura de un servicio
 
@@ -96,10 +151,10 @@ services/viviendas/src/
 ├── controllers/   leen la petición validada y arman la respuesta HTTP
 ├── services/      reglas de negocio y traducción de errores
 ├── repositories/  único lugar con SQL (consultas parametrizadas con mysql2)
-└── clients/       llamadas a rutas internas de otros servicios
+└── clients/       llamadas a rutas internas de otros servicios (con tiempo límite de 3 s)
 ```
 
-El código común está en `shared/`: formato estándar de errores, conexión a MySQL, validación y paginación, traducción de errores de MySQL, llamadas internas con tiempo límite de 3 segundos y la ruta `/health`.
+El código común está en `shared/`: formato estándar de errores, conexión a MySQL y transacciones, permisos por rol, validación y paginación, fechas en hora de la Ciudad de México, traducción de errores de MySQL, llamadas internas con tiempo límite de 3 segundos y la ruta `/health`.
 
 ## Documentación
 
@@ -126,6 +181,6 @@ El código común está en `shared/`: formato estándar de errores, conexión a 
 | 3 | Diseño de la API y contratos de servicio | Entregada |
 | 4 | Modelo de datos y persistencia | Entregada |
 | 5 | MVP Backend I | Entregada |
-| 6 | MVP Backend II e integración | Pendiente |
+| 6 | MVP Backend II e integración | Entregada |
 | 7 | Pruebas, seguridad, documentación y despliegue | Pendiente |
 | 8 | Entrega final | Pendiente |

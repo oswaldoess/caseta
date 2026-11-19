@@ -46,7 +46,7 @@ async function crear({ calle, numero, referencia }) {
 const COLUMNA_DE = { calle: "calle", numero: "numero", referencia: "referencia", activa: "activa" };
 
 async function actualizar(id, cambios) {
-  const campos = Object.keys(cambios).filter((c) => COLUMNA_DE[c]);
+  const campos = Object.keys(cambios).filter((c) => COLUMNA_DE[c] && cambios[c] !== undefined);
   if (!campos.length) return 0;
   const sets = campos.map((c) => `${COLUMNA_DE[c]} = ?`).join(", ");
   const valores = campos.map((c) => (c === "activa" ? (cambios[c] ? 1 : 0) : cambios[c]));

@@ -54,6 +54,28 @@ const esBooleanoJson = (v) => {
   return true;
 };
 
+// Fecha "AAAA-MM-DD" en la consulta (desde, hasta, validaEn).
+const FECHA = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+const esFecha = (v) => typeof v === "string" && FECHA.test(v) && !Number.isNaN(Date.parse(v + "T00:00:00Z"))
+  && new Date(v + "T00:00:00Z").toISOString().slice(0, 10) === v;
+const fechaEnConsulta = (nombre) =>
+  query(nombre).optional().custom((v) => {
+    if (!esFecha(v)) throw new Error("Debe ser una fecha con formato AAAA-MM-DD.");
+    return true;
+  });
+
+// Hora "HH:mm" de 00:00 a 23:59.
+const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+const esHora = (v) => typeof v === "string" && HORA.test(v);
+
+// Entero JSON (no el texto "5").
+const esEnteroJson = (min, max) => (v) => {
+  if (!Number.isInteger(v) || v < min || (max !== undefined && v > max)) {
+    throw new Error(max === undefined ? `Debe ser un número entero desde ${min}.` : `Debe ser un número entero entre ${min} y ${max}.`);
+  }
+  return true;
+};
+
 // Paginación común a todas las listas (pagina desde 1; limite de 1 a 100, 20 por defecto).
 const reglasPaginacion = [
   query("pagina").optional().isInt({ min: 1 }).withMessage("Debe ser un número entero desde 1.").toInt(),
@@ -79,4 +101,5 @@ const datosValidados = (req, ubicaciones) => matchedData(req, { locations: ubica
 module.exports = {
   validar, soloCampos, idEnRuta, booleanoEnConsulta, esBooleanoJson,
   reglasPaginacion, leerPaginacion, respuestaLista, patronLike, datosValidados,
+  esFecha, fechaEnConsulta, esHora, esEnteroJson,
 };

@@ -39,6 +39,32 @@ async function obtener(id) {
   return aVivienda(await exigirVivienda(id));
 }
 
+// E11 para un residente: solo su propia vivienda. Si pide otra responde 404, como si no existiera,
+// para no revelar datos de otras viviendas (Entrega 3, caso 4).
+async function obtenerComo(id, usuario) {
+  if (usuario.rol === "residente") {
+    const asignacion = await repo.asignacionDeUsuario(usuario.id);
+    if (!asignacion || asignacion.vivienda_id !== id) throw viviendaNoEncontrada(id);
+  }
+  return obtener(id);
+}
+
+// I03: vivienda y domicilio de un residente (lo usa Visitas para saber a qué vivienda registrar la visita).
+async function viviendaDeResidente(usuarioId) {
+  const asignacion = await repo.asignacionDeUsuario(usuarioId);
+  if (!asignacion) {
+    throw new ErrorApi(404, "RECURSO_NO_ENCONTRADO", `El usuario ${usuarioId} no tiene una vivienda asignada.`);
+  }
+  const v = await repo.buscarPorId(asignacion.vivienda_id);
+  return { usuarioId, viviendaId: v.id, domicilio: `${v.calle} ${v.numero}`, activa: Boolean(v.activa) };
+}
+
+// I09: datos mínimos de una vivienda para otros servicios (existe, domicilio y si está activa).
+async function resumenInterno(id) {
+  const v = await exigirVivienda(id);
+  return { id: v.id, domicilio: `${v.calle} ${v.numero}`, activa: Boolean(v.activa) };
+}
+
 async function crear(datos) {
   try {
     const id = await repo.crear(datos);
@@ -82,7 +108,10 @@ const referenciaInvalida = (mensaje) => new ErrorApi(422, "REFERENCIA_INVALIDA",
 ]);
 
 async function asignarResidente(viviendaId, { usuarioId, esTitular = false }, idSolicitud) {
-  await exigirVivienda(viviendaId);
+  const vivienda = await exigirVivienda(viviendaId);
+  if (!vivienda.activa) {
+    throw new ErrorApi(409, "CONFLICTO", `La vivienda ${viviendaId} está desactivada; no se le pueden asignar residentes.`);
+  }
 
   // RN02: solo un usuario activo con rol residente puede vivir en una vivienda (I02).
   const usuario = await identidad.obtenerUsuario(usuarioId, idSolicitud);
@@ -120,4 +149,7 @@ async function retirarResidente(viviendaId, usuarioId) {
   }
 }
 
-module.exports = { listar, obtener, crear, actualizar, listarResidentes, asignarResidente, retirarResidente };
+module.exports = {
+  listar, obtener, obtenerComo, crear, actualizar, listarResidentes, asignarResidente, retirarResidente,
+  viviendaDeResidente, resumenInterno,
+};

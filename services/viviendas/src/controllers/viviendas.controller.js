@@ -10,7 +10,19 @@ async function listar(req, res) {
 
 async function obtener(req, res) {
   const { viviendaId } = datosValidados(req, ["params"]);
-  res.json(await servicio.obtener(viviendaId));
+  res.json(await servicio.obtenerComo(viviendaId, req.usuario));
+}
+
+// I03
+async function viviendaDeResidente(req, res) {
+  const { usuarioId } = datosValidados(req, ["params"]);
+  res.json(await servicio.viviendaDeResidente(usuarioId));
+}
+
+// I09
+async function resumenInterno(req, res) {
+  const { viviendaId } = datosValidados(req, ["params"]);
+  res.json(await servicio.resumenInterno(viviendaId));
 }
 
 async function crear(req, res) {
@@ -42,4 +54,7 @@ async function retirarResidente(req, res) {
   res.status(204).end();
 }
 
-module.exports = { listar, obtener, crear, actualizar, listarResidentes, asignarResidente, retirarResidente };
+module.exports = {
+  listar, obtener, crear, actualizar, listarResidentes, asignarResidente, retirarResidente,
+  viviendaDeResidente, resumenInterno,
+};

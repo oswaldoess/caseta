@@ -57,4 +57,6 @@ const asignarResidente = [
 
 const retirarResidente = [idEnRuta("viviendaId"), idEnRuta("usuarioId"), validar];
 
-module.exports = { listar, obtener, crear, actualizar, asignarResidente, retirarResidente };
+const usuarioEnRuta = [idEnRuta("usuarioId"), validar];
+
+module.exports = { listar, obtener, crear, actualizar, asignarResidente, retirarResidente, usuarioEnRuta };

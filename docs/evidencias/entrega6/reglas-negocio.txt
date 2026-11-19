@@ -1,0 +1,502 @@
+Caseta · Entrega 6 · Reglas de negocio (salida real de la terminal)
+
+=== 1. RN03. La administración registra un adeudo a la vivienda 3 (E28)
+$ POST /adeudos   (token: administradora)
+{
+  "viviendaId": 3,
+  "concepto": "Cuota de mantenimiento",
+  "periodo": "2026-11",
+  "monto": 950
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/adeudos/6
+{
+  "id": 6,
+  "viviendaId": 3,
+  "concepto": "Cuota de mantenimiento",
+  "periodo": "2026-11",
+  "monto": 950,
+  "estado": "pendiente",
+  "registradoEn": "2026-11-18T18:45:52-06:00",
+  "liquidadoEn": null
+}
+
+=== 2. RN03. Mónica (vivienda 3) registra 7 personas para hoy: se permite (el límite es 10)
+$ POST /visitas   (token: residente vivienda 3)
+{
+  "tipo": "unica",
+  "nombreVisitante": "Primos Herrera",
+  "numeroPersonas": 7,
+  "fecha": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45"
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/visitas/13
+{
+  "id": 13,
+  "tipo": "unica",
+  "estado": "activa",
+  "codigo": "QWMTJTXB",
+  "viviendaId": 3,
+  "domicilio": "Calle Encino 15",
+  "residenteId": 8,
+  "nombreVisitante": "Primos Herrera",
+  "placas": null,
+  "numeroPersonas": 7,
+  "fechaInicio": "2026-11-18",
+  "fechaFin": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45",
+  "diasSemana": [],
+  "autorizadoPor": null,
+  "tieneEntradas": false,
+  "creadaEn": "2026-11-18T18:45:52-06:00",
+  "actualizadaEn": "2026-11-18T18:45:52-06:00"
+}
+
+=== 3. RN03. Otras 6 personas el mismo día superan el límite (422)
+$ POST /visitas   (token: residente vivienda 3)
+{
+  "tipo": "unica",
+  "nombreVisitante": "Tíos Herrera",
+  "numeroPersonas": 6,
+  "fecha": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45"
+}
+
+HTTP/1.1 422 Unprocessable Entity
+{
+  "error": {
+    "codigo": "LIMITE_PERSONAS_EXCEDIDO",
+    "mensaje": "La vivienda tiene un adeudo pendiente y solo puede recibir 10 personas por día. Para el 18/11/2026 ya hay 7 registradas.",
+    "estado": 422,
+    "detalles": [
+      {
+        "campo": "numeroPersonas",
+        "mensaje": "Puedes registrar hasta 3 personas para esa fecha."
+      }
+    ],
+    "ruta": "/api/v1/visitas",
+    "fecha": "2026-11-18T18:45:52-06:00",
+    "idSolicitud": "req_1417a1ca"
+  }
+}
+
+=== 4. RN03. La administración liquida el adeudo (E30)
+$ PATCH /adeudos/6   (token: administradora)
+{
+  "estado": "liquidado"
+}
+
+HTTP/1.1 200 OK
+{
+  "id": 6,
+  "viviendaId": 3,
+  "concepto": "Cuota de mantenimiento",
+  "periodo": "2026-11",
+  "monto": 950,
+  "estado": "liquidado",
+  "registradoEn": "2026-11-18T18:45:52-06:00",
+  "liquidadoEn": "2026-11-18T18:45:52-06:00"
+}
+
+=== 5. RN03. Sin adeudo pendiente, la misma visita ya se permite
+$ POST /visitas   (token: residente vivienda 3)
+{
+  "tipo": "unica",
+  "nombreVisitante": "Tíos Herrera",
+  "numeroPersonas": 6,
+  "fecha": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45"
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/visitas/14
+{
+  "id": 14,
+  "tipo": "unica",
+  "estado": "activa",
+  "codigo": "GRNERB4S",
+  "viviendaId": 3,
+  "domicilio": "Calle Encino 15",
+  "residenteId": 8,
+  "nombreVisitante": "Tíos Herrera",
+  "placas": null,
+  "numeroPersonas": 6,
+  "fechaInicio": "2026-11-18",
+  "fechaFin": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45",
+  "diasSemana": [],
+  "autorizadoPor": null,
+  "tieneEntradas": false,
+  "creadaEn": "2026-11-18T18:45:52-06:00",
+  "actualizadaEn": "2026-11-18T18:45:52-06:00"
+}
+
+=== 6. Liquidar dos veces es un conflicto (409)
+$ PATCH /adeudos/6   (token: administradora)
+{
+  "estado": "liquidado"
+}
+
+HTTP/1.1 409 Conflict
+{
+  "error": {
+    "codigo": "ADEUDO_YA_LIQUIDADO",
+    "mensaje": "El adeudo 6 ya fue liquidado el 18/11/2026.",
+    "estado": 409,
+    "detalles": [],
+    "ruta": "/api/v1/adeudos/6",
+    "fecha": "2026-11-18T18:45:52-06:00",
+    "idSolicitud": "req_6b2f14e3"
+  }
+}
+
+=== 7. RN09 y formato. Hora de fin antes de la de inicio y cero personas: todos los errores juntos (400)
+$ POST /visitas   (token: residente)
+{
+  "tipo": "unica",
+  "nombreVisitante": "Laura Méndez Ríos",
+  "numeroPersonas": 0,
+  "fecha": "2026-11-18",
+  "horaInicio": "23:00",
+  "horaFin": "18:00"
+}
+
+HTTP/1.1 400 Bad Request
+{
+  "error": {
+    "codigo": "VALIDACION_FALLIDA",
+    "mensaje": "Algunos campos no son válidos.",
+    "estado": 400,
+    "detalles": [
+      {
+        "campo": "numeroPersonas",
+        "mensaje": "Debe ser un número entero entre 1 y 20."
+      },
+      {
+        "campo": "horaFin",
+        "mensaje": "Debe ser posterior a horaInicio."
+      }
+    ],
+    "ruta": "/api/v1/visitas",
+    "fecha": "2026-11-18T18:45:52-06:00",
+    "idSolicitud": "req_ca8187d0"
+  }
+}
+
+=== 8. Una visita única se registra de hoy a 30 días (400)
+$ POST /visitas   (token: residente)
+{
+  "tipo": "unica",
+  "nombreVisitante": "Laura Méndez Ríos",
+  "numeroPersonas": 2,
+  "fecha": "2030-01-01",
+  "horaInicio": "18:00",
+  "horaFin": "22:00"
+}
+
+HTTP/1.1 400 Bad Request
+{
+  "error": {
+    "codigo": "VALIDACION_FALLIDA",
+    "mensaje": "Algunos campos no son válidos.",
+    "estado": 400,
+    "detalles": [
+      {
+        "campo": "fecha",
+        "mensaje": "Debe estar entre hoy (18/11/2026) y el 18/12/2026."
+      }
+    ],
+    "ruta": "/api/v1/visitas",
+    "fecha": "2026-11-18T18:45:52-06:00",
+    "idSolicitud": "req_b55431b1"
+  }
+}
+
+=== 9. RN04. Una visita frecuente que no es de hoy: día no permitido
+$ GET /codigos/R9HX3TQW/validez   (token: guardia)
+
+HTTP/1.1 200 OK
+{
+  "codigo": "R9HX3TQW",
+  "valido": false,
+  "motivo": "dia_no_permitido",
+  "mensaje": "El código solo es válido los días: lunes, jueves.",
+  "visita": {
+    "id": 2,
+    "tipo": "frecuente",
+    "nombreVisitante": "Rosa Hernández Gil",
+    "numeroPersonas": 1,
+    "domicilio": "Av. de los Fresnos 214",
+    "horaInicio": "08:00",
+    "horaFin": "15:00"
+  },
+  "consultadoEn": "2026-11-18T18:45:52-06:00"
+}
+
+=== 10. RN04. Una visita vencida
+$ GET /codigos/B6NQ2RYD/validez   (token: guardia)
+
+HTTP/1.1 200 OK
+{
+  "codigo": "B6NQ2RYD",
+  "valido": false,
+  "motivo": "vencido",
+  "mensaje": "El código venció el 28/10/2026.",
+  "visita": {
+    "id": 5,
+    "tipo": "unica",
+    "nombreVisitante": "Juan Pérez Morales",
+    "numeroPersonas": 1,
+    "domicilio": "Calle Encino 15",
+    "horaInicio": "09:00",
+    "horaFin": "12:00"
+  },
+  "consultadoEn": "2026-11-18T18:45:53-06:00"
+}
+
+=== 11. Visita que se cancelará (E17)
+$ POST /visitas   (token: residente)
+{
+  "tipo": "unica",
+  "nombreVisitante": "Héctor Ortega Luna",
+  "numeroPersonas": 4,
+  "fecha": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45"
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/visitas/15
+{
+  "id": 15,
+  "tipo": "unica",
+  "estado": "activa",
+  "codigo": "49NWULHP",
+  "viviendaId": 1,
+  "domicilio": "Av. de los Fresnos 214",
+  "residenteId": 5,
+  "nombreVisitante": "Héctor Ortega Luna",
+  "placas": null,
+  "numeroPersonas": 4,
+  "fechaInicio": "2026-11-18",
+  "fechaFin": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45",
+  "diasSemana": [],
+  "autorizadoPor": null,
+  "tieneEntradas": false,
+  "creadaEn": "2026-11-18T18:45:53-06:00",
+  "actualizadaEn": "2026-11-18T18:45:53-06:00"
+}
+
+=== 12. El residente la cancela (E20); no se borra, queda cancelada
+$ DELETE /visitas/15   (token: residente)
+
+HTTP/1.1 204 No Content
+
+=== 13. RN04. En la caseta el código cancelado no es válido (Entrega 3, caso 7)
+$ POST /accesos   (token: guardia)
+{
+  "codigo": "49NWULHP"
+}
+
+HTTP/1.1 422 Unprocessable Entity
+{
+  "error": {
+    "codigo": "CODIGO_NO_VALIDO",
+    "mensaje": "El código 49NWULHP no es válido: La visita fue cancelada por el residente.",
+    "estado": 422,
+    "detalles": [
+      {
+        "campo": "codigo",
+        "mensaje": "motivo: cancelado"
+      }
+    ],
+    "ruta": "/api/v1/accesos",
+    "fecha": "2026-11-18T18:45:53-06:00",
+    "idSolicitud": "req_18b6bcc4"
+  }
+}
+
+=== 14. Visita frecuente que entra hoy (miercoles)
+$ POST /visitas   (token: residente)
+{
+  "tipo": "frecuente",
+  "nombreVisitante": "Rosa Hernández Gil",
+  "numeroPersonas": 1,
+  "fechaInicio": "2026-11-18",
+  "fechaFin": "2027-02-15",
+  "horaInicio": "17:45",
+  "horaFin": "20:45",
+  "diasSemana": [
+    "miercoles"
+  ]
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/visitas/16
+{
+  "id": 16,
+  "tipo": "frecuente",
+  "estado": "activa",
+  "codigo": "38PL8DVT",
+  "viviendaId": 1,
+  "domicilio": "Av. de los Fresnos 214",
+  "residenteId": 5,
+  "nombreVisitante": "Rosa Hernández Gil",
+  "placas": null,
+  "numeroPersonas": 1,
+  "fechaInicio": "2026-11-18",
+  "fechaFin": "2027-02-15",
+  "horaInicio": "17:45",
+  "horaFin": "20:45",
+  "diasSemana": [
+    "miercoles"
+  ],
+  "autorizadoPor": null,
+  "tieneEntradas": false,
+  "creadaEn": "2026-11-18T18:45:53-06:00",
+  "actualizadaEn": "2026-11-18T18:45:53-06:00"
+}
+
+=== 15. Entra la visita frecuente
+$ POST /accesos   (token: guardia)
+{
+  "codigo": "38PL8DVT"
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/accesos/10
+{
+  "id": 10,
+  "visitaId": 16,
+  "tipoVisita": "frecuente",
+  "nombreVisitante": "Rosa Hernández Gil",
+  "numeroPersonas": 1,
+  "viviendaId": 1,
+  "domicilio": "Av. de los Fresnos 214",
+  "residenteId": 5,
+  "entrada": "2026-11-18T18:45:53-06:00",
+  "guardiaEntradaId": 2,
+  "salida": null,
+  "guardiaSalidaId": null,
+  "observaciones": null
+}
+
+=== 16. RN05. No puede volver a entrar sin haber salido (422)
+$ POST /accesos   (token: guardia)
+{
+  "codigo": "38PL8DVT"
+}
+
+HTTP/1.1 422 Unprocessable Entity
+{
+  "error": {
+    "codigo": "CODIGO_NO_VALIDO",
+    "mensaje": "El código 38PL8DVT no es válido: La visita ya está dentro del fraccionamiento; primero registra su salida.",
+    "estado": 422,
+    "detalles": [
+      {
+        "campo": "codigo",
+        "mensaje": "motivo: ya_dentro"
+      }
+    ],
+    "ruta": "/api/v1/accesos",
+    "fecha": "2026-11-18T18:45:53-06:00",
+    "idSolicitud": "req_236aaa8f"
+  }
+}
+
+=== 17. RN07. Sale una vez (201)…
+$ POST /accesos/10/salida   (token: guardia)
+
+HTTP/1.1 201 Created
+{
+  "id": 10,
+  "visitaId": 16,
+  "tipoVisita": "frecuente",
+  "nombreVisitante": "Rosa Hernández Gil",
+  "numeroPersonas": 1,
+  "viviendaId": 1,
+  "domicilio": "Av. de los Fresnos 214",
+  "residenteId": 5,
+  "entrada": "2026-11-18T18:45:53-06:00",
+  "guardiaEntradaId": 2,
+  "salida": "2026-11-18T18:45:53-06:00",
+  "guardiaSalidaId": 2,
+  "observaciones": null
+}
+
+=== 18. …y la segunda salida se rechaza (409)
+$ POST /accesos/10/salida   (token: guardia)
+
+HTTP/1.1 409 Conflict
+{
+  "error": {
+    "codigo": "SALIDA_YA_REGISTRADA",
+    "mensaje": "La salida del acceso 10 ya fue registrada a las 18:45.",
+    "estado": 409,
+    "detalles": [],
+    "ruta": "/api/v1/accesos/10/salida",
+    "fecha": "2026-11-18T18:45:53-06:00",
+    "idSolicitud": "req_ac671fed"
+  }
+}
+
+=== 19. RN06. Una visita con entrada ya no se modifica (409)
+$ PATCH /visitas/16   (token: residente)
+{
+  "numeroPersonas": 2
+}
+
+HTTP/1.1 409 Conflict
+{
+  "error": {
+    "codigo": "VISITA_CON_ENTRADA",
+    "mensaje": "La visita 16 ya tiene una entrada registrada y no se puede modificar.",
+    "estado": 409,
+    "detalles": [],
+    "ruta": "/api/v1/visitas/16",
+    "fecha": "2026-11-18T18:45:53-06:00",
+    "idSolicitud": "req_c80d97ed"
+  }
+}
+
+=== 20. Entrada de una visita no programada (RF14): Visitas la crea (I08) y Accesos registra la entrada
+$ POST /accesos   (token: guardia)
+{
+  "visitaNoProgramada": {
+    "viviendaId": 1,
+    "nombreVisitante": "Jorge Salas Peña",
+    "placas": "UQX-118-A",
+    "numeroPersonas": 1,
+    "autorizadoPor": "Carlos Ramírez Soto"
+  },
+  "observaciones": "El residente autorizó por teléfono."
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/accesos/11
+{
+  "id": 11,
+  "visitaId": 17,
+  "tipoVisita": "no_programada",
+  "nombreVisitante": "Jorge Salas Peña",
+  "numeroPersonas": 1,
+  "viviendaId": 1,
+  "domicilio": "Av. de los Fresnos 214",
+  "residenteId": null,
+  "entrada": "2026-11-18T18:45:53-06:00",
+  "guardiaEntradaId": 2,
+  "salida": null,
+  "guardiaSalidaId": null,
+  "observaciones": "El residente autorizó por teléfono."
+}

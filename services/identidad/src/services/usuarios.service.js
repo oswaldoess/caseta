@@ -46,9 +46,13 @@ async function crear(datos) {
   }
 }
 
-async function actualizar(id, cambios) {
+async function actualizar(id, cambios, quien) {
   const actual = await repo.buscarPorId(id);
   if (!actual) throw noEncontrado(id);
+  // Un administrador no puede dejar el sistema sin su propio acceso por error.
+  if (quien && quien.id === id && (cambios.activo === false || (cambios.rol && cambios.rol !== "administrador"))) {
+    throw new ErrorApi(409, "CONFLICTO", "No puedes desactivar tu propia cuenta ni quitarte el rol de administrador.");
+  }
   await repo.actualizar(id, cambios);
   return obtener(id);
 }

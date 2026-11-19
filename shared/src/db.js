@@ -1,4 +1,4 @@
-// Conexión a MySQL compartida por los servicios (Entrega 5).
+// Conexión a MySQL compartida por los servicios (Entrega 5; transacciones en la Entrega 6).
 // Cada servicio usa su propio usuario de MySQL (DB_USER en su .env), con permisos
 // solo sobre sus tablas (database/04_usuarios_servicios.sql).
 const mysql = require("mysql2/promise");
@@ -45,6 +45,29 @@ async function verificarBaseDatos() {
   }
 }
 
+// Ejecuta varias consultas en una sola transacción. Si fn lanza un error, se revierte todo.
+// fn recibe { consultar } ligado a la misma conexión.
+async function conTransaccion(fn) {
+  const conexion = await obtenerPool().getConnection();
+  try {
+    await conexion.beginTransaction();
+    const tx = {
+      consultar: async (sql, valores = []) => {
+        const [filas] = await conexion.execute(sql, valores);
+        return filas;
+      },
+    };
+    const resultado = await fn(tx);
+    await conexion.commit();
+    return resultado;
+  } catch (err) {
+    try { await conexion.rollback(); } catch { /* la conexión ya pudo haberse perdido */ }
+    throw err;
+  } finally {
+    conexion.release();
+  }
+}
+
 async function cerrarPool() {
   if (pool) {
     await pool.end();
@@ -52,4 +75,4 @@ async function cerrarPool() {
   }
 }
 
-module.exports = { obtenerPool, consultar, verificarBaseDatos, cerrarPool };
+module.exports = { obtenerPool, consultar, conTransaccion, verificarBaseDatos, cerrarPool };

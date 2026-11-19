@@ -1,0 +1,194 @@
+Caseta · Entrega 6 · Autenticación y autorización (salida real de la terminal)
+
+=== 1. Sin token (401)
+$ GET /usuarios   (token: ninguno)
+
+HTTP/1.1 401 Unauthorized
+{
+  "error": {
+    "codigo": "TOKEN_INVALIDO",
+    "mensaje": "Falta el token. Envía el encabezado Authorization: Bearer <token>.",
+    "estado": 401,
+    "detalles": [],
+    "ruta": "/api/v1/usuarios",
+    "fecha": "2026-11-18T18:45:50-06:00",
+    "idSolicitud": "req_addddd07"
+  }
+}
+
+=== 2. Token falso (401)
+$ GET /usuarios   (token: abc.def.ghi)
+
+HTTP/1.1 401 Unauthorized
+{
+  "error": {
+    "codigo": "TOKEN_INVALIDO",
+    "mensaje": "Tu sesión no es válida o expiró. Inicia sesión de nuevo.",
+    "estado": 401,
+    "detalles": [],
+    "ruta": "/api/v1/usuarios",
+    "fecha": "2026-11-18T18:45:50-06:00",
+    "idSolicitud": "req_70a1b126"
+  }
+}
+
+=== 3. Token vencido: emitido hace más de 8 horas (401)
+$ GET /usuarios   (token: vencido)
+
+HTTP/1.1 401 Unauthorized
+{
+  "error": {
+    "codigo": "TOKEN_EXPIRADO",
+    "mensaje": "Tu sesión expiró después de 8 horas. Inicia sesión de nuevo.",
+    "estado": 401,
+    "detalles": [],
+    "ruta": "/api/v1/usuarios",
+    "fecha": "2026-11-18T18:45:50-06:00",
+    "idSolicitud": "req_2c167bf2"
+  }
+}
+
+=== 4. Credenciales incorrectas (401)
+$ POST /sesiones   (token: ninguno)
+{
+  "correo": "carlos.ramirez@correo.com",
+  "contrasena": "NoEsMiClave1"
+}
+
+HTTP/1.1 401 Unauthorized
+{
+  "error": {
+    "codigo": "CREDENCIALES_INVALIDAS",
+    "mensaje": "El correo o la contraseña no son correctos.",
+    "estado": 401,
+    "detalles": [],
+    "ruta": "/api/v1/sesiones",
+    "fecha": "2026-11-18T18:45:51-06:00",
+    "idSolicitud": "req_1ef0ca02"
+  }
+}
+
+=== 5. Rol sin permiso: un residente intenta registrar un adeudo (403)
+$ POST /adeudos   (token: residente)
+{
+  "viviendaId": 1,
+  "concepto": "Cuota de mantenimiento",
+  "periodo": "2026-11",
+  "monto": 950
+}
+
+HTTP/1.1 403 Forbidden
+{
+  "error": {
+    "codigo": "SIN_PERMISO",
+    "mensaje": "Tu rol no tiene permiso para realizar esta operación.",
+    "estado": 403,
+    "detalles": [],
+    "ruta": "/api/v1/adeudos",
+    "fecha": "2026-11-18T18:45:51-06:00",
+    "idSolicitud": "req_36e6e8a3"
+  }
+}
+
+=== 6. Rol sin permiso: un residente intenta listar usuarios (403)
+$ GET /usuarios   (token: residente)
+
+HTTP/1.1 403 Forbidden
+{
+  "error": {
+    "codigo": "SIN_PERMISO",
+    "mensaje": "Tu rol no tiene permiso para realizar esta operación.",
+    "estado": 403,
+    "detalles": [],
+    "ruta": "/api/v1/usuarios",
+    "fecha": "2026-11-18T18:45:51-06:00",
+    "idSolicitud": "req_e4f96339"
+  }
+}
+
+=== 7. Datos de otra vivienda: el residente pide la vivienda 2 (404, como si no existiera)
+$ GET /viviendas/2   (token: residente)
+
+HTTP/1.1 404 Not Found
+{
+  "error": {
+    "codigo": "RECURSO_NO_ENCONTRADO",
+    "mensaje": "La vivienda 2 no existe.",
+    "estado": 404,
+    "detalles": [],
+    "ruta": "/api/v1/viviendas/2",
+    "fecha": "2026-11-18T18:45:51-06:00",
+    "idSolicitud": "req_63de98cd"
+  }
+}
+
+=== 8. El guardia solo ve las visitas de hoy (403 con otra fecha)
+$ GET /visitas?validaEn=2030-01-01   (token: guardia)
+
+HTTP/1.1 403 Forbidden
+{
+  "error": {
+    "codigo": "SIN_PERMISO",
+    "mensaje": "El guardia solo puede consultar las visitas válidas hoy.",
+    "estado": 403,
+    "detalles": [],
+    "ruta": "/api/v1/visitas?validaEn=2030-01-01",
+    "fecha": "2026-11-18T18:45:51-06:00",
+    "idSolicitud": "req_cc675743"
+  }
+}
+
+=== 9. Cerrar sesión (E02)
+$ DELETE /sesiones/actual   (token: guardia)
+
+HTTP/1.1 204 No Content
+
+=== 10. El token cerrado ya no sirve (401)
+$ GET /usuarios/me   (token: guardia (cerrado))
+
+HTTP/1.1 401 Unauthorized
+{
+  "error": {
+    "codigo": "TOKEN_INVALIDO",
+    "mensaje": "Tu sesión fue cerrada. Inicia sesión de nuevo.",
+    "estado": 401,
+    "detalles": [],
+    "ruta": "/api/v1/usuarios/me",
+    "fecha": "2026-11-18T18:45:51-06:00",
+    "idSolicitud": "req_74e4cf57"
+  }
+}
+
+=== 11. Llamar directo al puerto del servicio, sin pasar por el gateway (401)
+$ GET http://localhost:3001/api/v1/usuarios   (con encabezados X-Usuario-Id: 1 y X-Usuario-Rol: administrador inventados)
+HTTP/1.1 401 Unauthorized
+{
+  "error": {
+    "codigo": "TOKEN_INVALIDO",
+    "mensaje": "La petición debe hacerse a través del API Gateway.",
+    "estado": 401,
+    "detalles": [],
+    "ruta": "/api/v1/usuarios",
+    "fecha": "2026-11-18T18:45:51-06:00",
+    "idSolicitud": null
+  }
+}
+
+=== 12. Seis intentos fallidos de inicio de sesión en un minuto (el sexto responde 429)
+Intento 1: HTTP 401 CREDENCIALES_INVALIDAS
+Intento 2: HTTP 401 CREDENCIALES_INVALIDAS
+Intento 3: HTTP 401 CREDENCIALES_INVALIDAS
+Intento 4: HTTP 401 CREDENCIALES_INVALIDAS
+Intento 5: HTTP 401 CREDENCIALES_INVALIDAS
+Intento 6: HTTP 429 DEMASIADOS_INTENTOS
+{
+  "error": {
+    "codigo": "DEMASIADOS_INTENTOS",
+    "mensaje": "Demasiados intentos de inicio de sesión. Espera un minuto e inténtalo de nuevo.",
+    "estado": 429,
+    "detalles": [],
+    "ruta": "/api/v1/sesiones",
+    "fecha": "2026-11-18T18:45:51-06:00",
+    "idSolicitud": "req_9609a0c4"
+  }
+}

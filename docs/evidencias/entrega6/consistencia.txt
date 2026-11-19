@@ -1,0 +1,64 @@
+Caseta · Entrega 6 · Transacciones y consistencia entre servicios (salida real de la terminal)
+
+=== 1. Dos guardias registran la entrada del mismo código al mismo tiempo (4 peticiones en paralelo)
+Visita 23 con código NP43XVD5.
+Petición 1: HTTP 409 CODIGO_YA_UTILIZADO
+Petición 2: HTTP 201 acceso 16
+Petición 3: HTTP 409 CODIGO_YA_UTILIZADO
+Petición 4: HTTP 409 CODIGO_YA_UTILIZADO
+Resultado en la base: una sola entrada y un solo uso del código.
++---------+
+| accesos |
++---------+
+|       1 |
++---------+
++------+
+| usos |
++------+
+|    1 |
++------+
++-----------+
+| estado    |
++-----------+
+| utilizada |
++-----------+
+
+=== 2. Reglas y Adeudos se detiene: no se puede evaluar RN03, así que la visita no se guarda (503)
++---------------+
+| visitas_antes |
++---------------+
+|            23 |
++---------------+
+$ POST /visitas
+{
+  "error": {
+    "codigo": "SERVICIO_NO_DISPONIBLE",
+    "mensaje": "El servicio de Reglas y Adeudos no está disponible en este momento. Inténtalo en unos momentos.",
+    "estado": 503,
+    "detalles": [],
+    "ruta": "/api/v1/visitas",
+    "fecha": "2026-11-18T18:46:04-06:00",
+    "idSolicitud": "req_40045199"
+  }
+}
+HTTP 503
++-----------------+
+| visitas_despues |
++-----------------+
+|              23 |
++-----------------+
+$ GET /health
+{
+  "estado": "degradado",
+  "version": "1.0.0",
+  "fecha": "2026-11-18T18:46:04-06:00",
+  "servicios": {
+    "reglas": "sin_respuesta",
+    "viviendas": "ok",
+    "visitas": "ok",
+    "identidad": "ok",
+    "accesos": "ok"
+  }
+}
+Reglas y Adeudos se vuelve a levantar:
+estado: ok

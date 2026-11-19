@@ -1,10 +1,11 @@
 openapi: 3.0.3
 info:
   title: Caseta API
-  version: 1.0.0-entrega5
+  version: 1.0.0-entrega6
   description: >-
     API pública de Caseta, sistema de control de visitas para fraccionamientos privados. Todas las peticiones entran por
     el API Gateway. Borrador de la Entrega 3 del proyecto integrador de Arquitectura Orientada a Servicios (UPSRJ).
+    Entrega 6: los 33 endpoints están implementados; las reglas de negocio se describen en docs/reglas-negocio.md.
 servers:
   - url: http://localhost:3000/api/v1
     description: API Gateway en el entorno local

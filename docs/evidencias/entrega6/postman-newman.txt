@@ -1,0 +1,645 @@
+newman
+
+Caseta API - Entrega 6
+
+❏ 0. Estado del sistema e inicio de sesión
+↳ E33 Estado del sistema
+  GET http://localhost:3000/api/v1/health [200 OK, 1.13kB, 34ms]
+  ✓  Responde 200
+  ✓  Los cinco servicios responden
+
+↳ E01 Inicia sesión la administradora
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.33kB, 87ms]
+  ✓  Responde 201
+  ✓  Devuelve un token Bearer de 8 horas
+  ✓  Nunca devuelve la contraseña
+
+↳ E01 Inicia sesión un residente (Carlos, vivienda 1)
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.32kB, 87ms]
+  ✓  Responde 201
+  ✓  Devuelve un token Bearer de 8 horas
+  ✓  Nunca devuelve la contraseña
+
+↳ E01 Inicia sesión otra residente (Mónica, vivienda 3)
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.31kB, 86ms]
+  ✓  Responde 201
+  ✓  Devuelve un token Bearer de 8 horas
+  ✓  Nunca devuelve la contraseña
+
+↳ E01 Inicia sesión un guardia (Miguel)
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.32kB, 86ms]
+  ✓  Responde 201
+  ✓  Devuelve un token Bearer de 8 horas
+  ✓  Nunca devuelve la contraseña
+
+↳ E03 Consultar mi perfil
+  GET http://localhost:3000/api/v1/usuarios/me [200 OK, 1.17kB, 11ms]
+  ✓  Responde 200
+  ✓  Es el usuario del token
+  ✓  Nunca devuelve la contraseña
+
+↳ Error E01 contraseña incorrecta (401)
+  POST http://localhost:3000/api/v1/sesiones [401 Unauthorized, 1.17kB, 77ms]
+  ✓  Responde 401
+  ✓  Error con formato estándar: CREDENCIALES_INVALIDAS
+
+↳ Error E01 cuenta desactivada (401)
+  POST http://localhost:3000/api/v1/sesiones [401 Unauthorized, 1.17kB, 77ms]
+  ✓  Responde 401
+  ✓  Error con formato estándar: CREDENCIALES_INVALIDAS
+
+↳ Error E01 datos inválidos (400)
+  POST http://localhost:3000/api/v1/sesiones [400 Bad Request, 1.26kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+❏ 1. Autenticación y permisos por rol
+↳ Error sin token (401)
+  GET http://localhost:3000/api/v1/usuarios [401 Unauthorized, 1.22kB, 4ms]
+  ✓  Responde 401
+  ✓  Error con formato estándar: TOKEN_INVALIDO
+
+↳ Error token falso (401)
+  GET http://localhost:3000/api/v1/usuarios [401 Unauthorized, 1.21kB, 2ms]
+  ✓  Responde 401
+  ✓  Error con formato estándar: TOKEN_INVALIDO
+
+↳ Error residente lista usuarios (403)
+  GET http://localhost:3000/api/v1/usuarios [403 Forbidden, 1.17kB, 8ms]
+  ✓  Responde 403
+  ✓  Error con formato estándar: SIN_PERMISO
+
+↳ Error residente registra un adeudo (403)
+  POST http://localhost:3000/api/v1/adeudos [403 Forbidden, 1.17kB, 8ms]
+  ✓  Responde 403
+  ✓  Error con formato estándar: SIN_PERMISO
+
+↳ Error guardia registra una visita (403)
+  POST http://localhost:3000/api/v1/visitas [403 Forbidden, 1.17kB, 8ms]
+  ✓  Responde 403
+  ✓  Error con formato estándar: SIN_PERMISO
+
+↳ Error administradora registra una entrada (403)
+  POST http://localhost:3000/api/v1/accesos [403 Forbidden, 1.17kB, 7ms]
+  ✓  Responde 403
+  ✓  Error con formato estándar: SIN_PERMISO
+
+↳ Error residente valida un código (403)
+  GET http://localhost:3000/api/v1/codigos/K7P4M2QX/validez [403 Forbidden, 1.18kB, 6ms]
+  ✓  Responde 403
+  ✓  Error con formato estándar: SIN_PERMISO
+
+↳ E11 Residente consulta su vivienda
+  GET http://localhost:3000/api/v1/viviendas/1 [200 OK, 1.18kB, 10ms]
+  ✓  Responde 200
+  ✓  Es su vivienda
+
+↳ Error E11 residente consulta otra vivienda (404)
+  GET http://localhost:3000/api/v1/viviendas/2 [404 Not Found, 1.15kB, 11ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+↳ E01 Inicia sesión una guardia (Sandra)
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.31kB, 83ms]
+  ✓  Responde 201
+  ✓  Devuelve un token Bearer de 8 horas
+  ✓  Nunca devuelve la contraseña
+
+↳ E02 Cerrar sesión
+  DELETE http://localhost:3000/api/v1/sesiones/actual [204 No Content, 840B, 9ms]
+  ✓  Responde 204
+
+↳ Error usar un token después de cerrar sesión (401)
+  GET http://localhost:3000/api/v1/usuarios/me [401 Unauthorized, 1.2kB, 6ms]
+  ✓  Responde 401
+  ✓  Error con formato estándar: TOKEN_INVALIDO
+  ✓  Explica que la sesión se cerró
+
+↳ E01 Inicia sesión un guardia (Ricardo)
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.31kB, 85ms]
+  ✓  Responde 201
+  ✓  Devuelve un token Bearer de 8 horas
+  ✓  Nunca devuelve la contraseña
+
+↳ Error E04 contraseña actual incorrecta (400)
+  PUT http://localhost:3000/api/v1/usuarios/me/contrasena [400 Bad Request, 1.26kB, 83ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: CONTRASENA_ACTUAL_INCORRECTA
+
+↳ E04 Cambiar mi contraseña
+  PUT http://localhost:3000/api/v1/usuarios/me/contrasena [204 No Content, 840B, 169ms]
+  ✓  Responde 204
+
+↳ E01 Inicia sesión con la contraseña nueva
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.31kB, 84ms]
+  ✓  Responde 201
+  ✓  Devuelve un token Bearer de 8 horas
+  ✓  Nunca devuelve la contraseña
+
+↳ E04 Restaurar la contraseña de prueba
+  PUT http://localhost:3000/api/v1/usuarios/me/contrasena [204 No Content, 840B, 152ms]
+  ✓  Responde 204
+
+❏ 2. Usuarios (S1. Identidad)
+↳ E06 Crear usuario
+  POST http://localhost:3000/api/v1/usuarios [201 Created, 1.21kB, 91ms]
+  ✓  Responde 201
+  ✓  Devuelve Location y el usuario creado
+  ✓  Nunca devuelve la contraseña
+
+↳ E05 Listar usuarios
+  GET http://localhost:3000/api/v1/usuarios?pagina=1&limite=5 [200 OK, 2.15kB, 14ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Nunca devuelve la contraseña
+
+↳ E05 Filtrar residentes activos por nombre
+  GET http://localhost:3000/api/v1/usuarios?rol=residente&activo=true&q=robles [200 OK, 1.25kB, 35ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Todos son residentes activos
+
+↳ E07 Consultar usuario
+  GET http://localhost:3000/api/v1/usuarios/12 [200 OK, 1.17kB, 8ms]
+  ✓  Responde 200
+  ✓  Es el usuario creado
+  ✓  Nunca devuelve la contraseña
+
+↳ E08 Modificar teléfono
+  PATCH http://localhost:3000/api/v1/usuarios/12 [200 OK, 1.17kB, 15ms]
+  ✓  Responde 200
+  ✓  Se guardó el teléfono
+
+↳ Error E06 correo duplicado (409)
+  POST http://localhost:3000/api/v1/usuarios [409 Conflict, 1.2kB, 81ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: CORREO_DUPLICADO
+
+↳ Error E06 datos inválidos (400)
+  POST http://localhost:3000/api/v1/usuarios [400 Bad Request, 1.52kB, 8ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E06 campo no permitido (400)
+  POST http://localhost:3000/api/v1/usuarios [400 Bad Request, 1.2kB, 11ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E07 usuario inexistente (404)
+  GET http://localhost:3000/api/v1/usuarios/999999 [404 Not Found, 1.16kB, 8ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+↳ Error E07 identificador inválido (400)
+  GET http://localhost:3000/api/v1/usuarios/abc [400 Bad Request, 1.23kB, 8ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E05 paginación inválida (400)
+  GET http://localhost:3000/api/v1/usuarios?pagina=0&limite=500 [400 Bad Request, 1.31kB, 6ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E08 sin campos (400)
+  PATCH http://localhost:3000/api/v1/usuarios/12 [400 Bad Request, 1.25kB, 8ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+
+❏ 3. Viviendas (S2. Viviendas)
+↳ E10 Registrar vivienda
+  POST http://localhost:3000/api/v1/viviendas [201 Created, 1.21kB, 12ms]
+  ✓  Responde 201
+  ✓  Devuelve Location y la vivienda creada
+
+↳ E09 Listar viviendas
+  GET http://localhost:3000/api/v1/viviendas?pagina=1&limite=10 [200 OK, 2.6kB, 15ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+
+↳ E09 Buscar viviendas activas
+  GET http://localhost:3000/api/v1/viviendas?q=roble&activa=true [200 OK, 1.25kB, 11ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+
+↳ E11 Consultar vivienda
+  GET http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.17kB, 9ms]
+  ✓  Responde 200
+  ✓  Es la vivienda creada
+
+↳ E12 Modificar referencia
+  PATCH http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.19kB, 16ms]
+  ✓  Responde 200
+  ✓  Se guardó la referencia
+
+↳ Error E10 vivienda duplicada (409)
+  POST http://localhost:3000/api/v1/viviendas [409 Conflict, 1.17kB, 11ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: VIVIENDA_DUPLICADA
+
+↳ Error E10 datos inválidos (400)
+  POST http://localhost:3000/api/v1/viviendas [400 Bad Request, 1.35kB, 11ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E11 vivienda inexistente (404)
+  GET http://localhost:3000/api/v1/viviendas/999999 [404 Not Found, 1.16kB, 7ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+↳ Error E12 cambiar a un domicilio que ya existe (409)
+  PATCH http://localhost:3000/api/v1/viviendas/7 [409 Conflict, 1.17kB, 10ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: VIVIENDA_DUPLICADA
+
+❏ 4. Residentes de una vivienda (S2 → S1)
+↳ E14 Asignar residente titular
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [201 Created, 1.09kB, 46ms]
+  ✓  Responde 201
+  ✓  Asignación con el nombre que da Identidad
+
+↳ E13 Listar residentes
+  GET http://localhost:3000/api/v1/viviendas/7/residentes [200 OK, 1.05kB, 17ms]
+  ✓  Responde 200
+  ✓  Aparece el residente asignado
+
+↳ E11 La vivienda ya cuenta 1 residente
+  GET http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.19kB, 9ms]
+  ✓  Responde 200
+  ✓  totalResidentes = 1
+
+↳ Error E14 residente ya asignado (409)
+  POST http://localhost:3000/api/v1/viviendas/1/residentes [409 Conflict, 1.2kB, 12ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: RESIDENTE_YA_ASIGNADO
+
+↳ Error E14 usuario guardia (422)
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [422 Unprocessable Entity, 1.27kB, 14ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: REFERENCIA_INVALIDA
+
+↳ Error E14 usuario inexistente (422)
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [422 Unprocessable Entity, 1.25kB, 11ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: REFERENCIA_INVALIDA
+
+↳ Error E14 tipos inválidos (400)
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [400 Bad Request, 1.3kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ E15 Retirar residente
+  DELETE http://localhost:3000/api/v1/viviendas/7/residentes/12 [204 No Content, 840B, 10ms]
+  ✓  Responde 204
+
+↳ Error E15 retirar otra vez (404)
+  DELETE http://localhost:3000/api/v1/viviendas/7/residentes/12 [404 Not Found, 1.19kB, 7ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+❏ 5. Flujo completo: visita con código
+↳ E17 Residente registra una visita única
+  POST http://localhost:3000/api/v1/visitas [201 Created, 1.42kB, 17ms]
+  ✓  Responde 201
+  ✓  Visita activa con código generado por el servidor
+
+↳ E16 Residente lista sus visitas
+  GET http://localhost:3000/api/v1/visitas?estado=activa&pagina=1&limite=50 [200 OK, 2.37kB, 19ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Solo ve visitas de su vivienda
+
+↳ E16 Guardia ve las visitas esperadas hoy
+  GET http://localhost:3000/api/v1/visitas?limite=100 [200 OK, 3.22kB, 10ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Incluye la visita recién registrada
+  ✓  Todas están activas
+
+↳ E21 Guardia valida el código
+  GET http://localhost:3000/api/v1/codigos/KJS7T9G3/validez [200 OK, 1.23kB, 14ms]
+  ✓  Responde 200
+  ✓  El código permite la entrada
+
+↳ E22 Guardia registra la entrada
+  POST http://localhost:3000/api/v1/accesos [201 Created, 1.28kB, 21ms]
+  ✓  Responde 201
+  ✓  Acceso abierto con los datos de la visita
+
+↳ E18 Residente ve su visita utilizada
+  GET http://localhost:3000/api/v1/visitas/18 [200 OK, 1.39kB, 11ms]
+  ✓  Responde 200
+  ✓  Quedó utilizada y con entrada
+
+↳ E23 Residente consulta el historial de su vivienda
+  GET http://localhost:3000/api/v1/accesos?dentro=true&limite=50 [200 OK, 1.95kB, 12ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Incluye la entrada
+  ✓  Solo ve accesos de su vivienda
+
+↳ E24 Guardia consulta el acceso
+  GET http://localhost:3000/api/v1/accesos/12 [200 OK, 1.25kB, 9ms]
+  ✓  Responde 200
+
+↳ E26 Guardia agrega una observación
+  PATCH http://localhost:3000/api/v1/accesos/12 [200 OK, 1.32kB, 10ms]
+  ✓  Responde 200
+  ✓  Se agregó sin borrar la anterior
+
+↳ E25 Guardia registra la salida
+  POST http://localhost:3000/api/v1/accesos/12/salida [201 Created, 1.34kB, 11ms]
+  ✓  Responde 201
+  ✓  La salida queda registrada
+
+↳ E23 Administradora consulta el historial con filtros
+  GET http://localhost:3000/api/v1/accesos?viviendaId=1&tipoVisita=unica&desde=2026-11-18&hasta=2026-11-18&pagina=1&limite=5 [200 OK, 1.76kB, 12ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Incluye el acceso de hoy
+
+❏ 6. Reglas de visitas y accesos
+↳ Error E22 el código ya se utilizó (422)
+  POST http://localhost:3000/api/v1/accesos [422 Unprocessable Entity, 1.29kB, 17ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: CODIGO_NO_VALIDO
+  ✓  El motivo es ya_utilizado
+
+↳ Error E25 salida registrada dos veces (409)
+  POST http://localhost:3000/api/v1/accesos/12/salida [409 Conflict, 1.19kB, 8ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: SALIDA_YA_REGISTRADA
+
+↳ Error E19 modificar una visita con entrada (409)
+  PATCH http://localhost:3000/api/v1/visitas/18 [409 Conflict, 1.19kB, 13ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: VISITA_CON_ENTRADA
+
+↳ Error E20 cancelar una visita con entrada (409)
+  DELETE http://localhost:3000/api/v1/visitas/18 [409 Conflict, 1.19kB, 10ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: VISITA_CON_ENTRADA
+
+↳ Error E18 otra residente pide la visita (404)
+  GET http://localhost:3000/api/v1/visitas/18 [404 Not Found, 1.15kB, 11ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+↳ Error E24 otra residente pide el acceso (404)
+  GET http://localhost:3000/api/v1/accesos/12 [404 Not Found, 1.15kB, 10ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+↳ E17 Registrar otra visita
+  POST http://localhost:3000/api/v1/visitas [201 Created, 1.41kB, 19ms]
+  ✓  Responde 201
+
+↳ E19 Modificar la visita
+  PATCH http://localhost:3000/api/v1/visitas/19 [200 OK, 1.39kB, 18ms]
+  ✓  Responde 200
+  ✓  Se guardaron los cambios
+
+↳ Error E19 hora de fin antes de la de inicio (400)
+  PATCH http://localhost:3000/api/v1/visitas/19 [400 Bad Request, 1.22kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ E20 Cancelar la visita
+  DELETE http://localhost:3000/api/v1/visitas/19 [204 No Content, 840B, 13ms]
+  ✓  Responde 204
+
+↳ E21 El código cancelado ya no es válido
+  GET http://localhost:3000/api/v1/codigos/T45MSLZ7/validez [200 OK, 1.27kB, 12ms]
+  ✓  Responde 200
+  ✓  valido = false, motivo cancelado
+
+↳ Error E22 entrada con un código cancelado (422)
+  POST http://localhost:3000/api/v1/accesos [422 Unprocessable Entity, 1.25kB, 13ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: CODIGO_NO_VALIDO
+  ✓  El motivo es cancelado
+
+↳ Error E20 cancelar otra vez (409)
+  DELETE http://localhost:3000/api/v1/visitas/19 [409 Conflict, 1.17kB, 15ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: CONFLICTO
+
+↳ E21 Código vencido
+  GET http://localhost:3000/api/v1/codigos/B6NQ2RYD/validez [200 OK, 1.25kB, 12ms]
+  ✓  Responde 200
+  ✓  valido = false, motivo vencido
+
+↳ Error E21 código inexistente (404)
+  GET http://localhost:3000/api/v1/codigos/ZZZZ2222/validez [404 Not Found, 1.19kB, 9ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: CODIGO_NO_ENCONTRADO
+
+↳ Error E21 código mal escrito (400)
+  GET http://localhost:3000/api/v1/codigos/K7P4-0O1/validez [400 Bad Request, 1.27kB, 6ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+
+↳ Error E17 datos inválidos (400)
+  POST http://localhost:3000/api/v1/visitas [400 Bad Request, 1.3kB, 8ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E17 fecha a más de 30 días (400)
+  POST http://localhost:3000/api/v1/visitas [400 Bad Request, 1.23kB, 10ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ Error E16 guardia pide visitas de otra fecha (403)
+  GET http://localhost:3000/api/v1/visitas?validaEn=2030-01-01 [403 Forbidden, 1.19kB, 6ms]
+  ✓  Responde 403
+  ✓  Error con formato estándar: SIN_PERMISO
+
+↳ E17 Residente registra una visita frecuente
+  POST http://localhost:3000/api/v1/visitas [201 Created, 1.43kB, 14ms]
+  ✓  Responde 201
+  ✓  Frecuente con sus días
+
+↳ E22 Entra la visita frecuente
+  POST http://localhost:3000/api/v1/accesos [201 Created, 1.27kB, 20ms]
+  ✓  Responde 201
+
+↳ Error E22 la visita frecuente ya está dentro (422)
+  POST http://localhost:3000/api/v1/accesos [422 Unprocessable Entity, 1.29kB, 12ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: CODIGO_NO_VALIDO
+  ✓  El motivo es ya_dentro
+
+↳ E25 Sale la visita frecuente
+  POST http://localhost:3000/api/v1/accesos/13/salida [201 Created, 1.29kB, 10ms]
+  ✓  Responde 201
+
+↳ E22 La visita frecuente vuelve a entrar
+  POST http://localhost:3000/api/v1/accesos [201 Created, 1.27kB, 21ms]
+  ✓  Responde 201
+
+↳ E25 Sale otra vez
+  POST http://localhost:3000/api/v1/accesos/14/salida [201 Created, 1.26kB, 11ms]
+  ✓  Responde 201
+
+↳ E22 Entrada de una visita no programada
+  POST http://localhost:3000/api/v1/accesos [201 Created, 1.31kB, 28ms]
+  ✓  Responde 201
+  ✓  Acceso de una visita no programada
+
+↳ E25 Sale la visita no programada
+  POST http://localhost:3000/api/v1/accesos/15/salida [201 Created, 1.3kB, 9ms]
+  ✓  Responde 201
+
+↳ Error E22 código y visita no programada a la vez (400)
+  POST http://localhost:3000/api/v1/accesos [400 Bad Request, 1.27kB, 6ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+
+↳ Error E22 no programada a una vivienda desactivada (422)
+  POST http://localhost:3000/api/v1/accesos [422 Unprocessable Entity, 1.25kB, 16ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: REFERENCIA_INVALIDA
+
+❏ 7. Regla del adeudo (RN03) y parámetros
+↳ E28 Registrar un adeudo a la vivienda 3
+  POST http://localhost:3000/api/v1/adeudos [201 Created, 1.15kB, 21ms]
+  ✓  Responde 201
+  ✓  Adeudo pendiente
+
+↳ Error E17 visita que supera el límite por adeudo (422)
+  POST http://localhost:3000/api/v1/visitas [422 Unprocessable Entity, 1.35kB, 46ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: LIMITE_PERSONAS_EXCEDIDO
+  ✓  Señala los campos con error
+
+↳ E27 Adeudos pendientes de la vivienda 3
+  GET http://localhost:3000/api/v1/adeudos?viviendaId=3&estado=pendiente&pagina=1&limite=10 [200 OK, 1.19kB, 13ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Incluye el adeudo nuevo
+
+↳ E29 Consultar el adeudo
+  GET http://localhost:3000/api/v1/adeudos/7 [200 OK, 1.12kB, 9ms]
+  ✓  Responde 200
+
+↳ E30 Liquidar el adeudo
+  PATCH http://localhost:3000/api/v1/adeudos/7 [200 OK, 1.14kB, 10ms]
+  ✓  Responde 200
+  ✓  Queda liquidado con fecha
+
+↳ Error E30 liquidar otra vez (409)
+  PATCH http://localhost:3000/api/v1/adeudos/7 [409 Conflict, 1.17kB, 9ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: ADEUDO_YA_LIQUIDADO
+
+↳ E17 Sin adeudo, la misma visita ya se permite
+  POST http://localhost:3000/api/v1/visitas [201 Created, 1.41kB, 23ms]
+  ✓  Responde 201
+
+↳ E20 Mónica cancela la reunión
+  DELETE http://localhost:3000/api/v1/visitas/22 [204 No Content, 840B, 11ms]
+  ✓  Responde 204
+
+↳ Error E28 vivienda inexistente (422)
+  POST http://localhost:3000/api/v1/adeudos [422 Unprocessable Entity, 1.23kB, 11ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: REFERENCIA_INVALIDA
+
+↳ Error E28 datos inválidos (400)
+  POST http://localhost:3000/api/v1/adeudos [400 Bad Request, 1.35kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+↳ E31 Listar parámetros del reglamento
+  GET http://localhost:3000/api/v1/parametros [200 OK, 1.37kB, 7ms]
+  ✓  Responde 200
+  ✓  Están los dos parámetros
+
+↳ E32 Modificar la tolerancia
+  PUT http://localhost:3000/api/v1/parametros/tolerancia_minutos [200 OK, 1.14kB, 8ms]
+  ✓  Responde 200
+  ✓  Valor guardado
+
+↳ Error E32 valor fuera de rango (400)
+  PUT http://localhost:3000/api/v1/parametros/tolerancia_minutos [400 Bad Request, 1.23kB, 7ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Señala los campos con error
+
+❏ 8. Bajas lógicas
+↳ E01 Elena inicia sesión antes de su baja
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.32kB, 72ms]
+  ✓  Responde 201
+
+↳ E08 Desactivar usuario
+  PATCH http://localhost:3000/api/v1/usuarios/12 [200 OK, 1.17kB, 12ms]
+  ✓  Responde 200
+  ✓  Queda inactivo
+
+↳ Error el token de una cuenta desactivada deja de servir (401)
+  GET http://localhost:3000/api/v1/usuarios/me [401 Unauthorized, 1.21kB, 5ms]
+  ✓  Responde 401
+  ✓  Error con formato estándar: TOKEN_INVALIDO
+  ✓  Explica que la cuenta se desactivó
+
+↳ Error E14 asignar usuario desactivado (422)
+  POST http://localhost:3000/api/v1/viviendas/7/residentes [422 Unprocessable Entity, 1.26kB, 11ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: REFERENCIA_INVALIDA
+
+↳ E12 Desactivar vivienda
+  PATCH http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.19kB, 11ms]
+  ✓  Responde 200
+  ✓  Queda inactiva
+
+↳ E09 Listar viviendas inactivas
+  GET http://localhost:3000/api/v1/viviendas?activa=false [200 OK, 1.49kB, 7ms]
+  ✓  Responde 200
+  ✓  Lista con datos y paginacion
+  ✓  Incluye la vivienda desactivada
+
+↳ Error la administradora no puede desactivarse a sí misma (409)
+  PATCH http://localhost:3000/api/v1/usuarios/1 [409 Conflict, 1.19kB, 10ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: CONFLICTO
+
+❏ 9. Errores generales
+↳ Ruta inexistente (404)
+  GET http://localhost:3000/api/v1/viviendas/1/mascotas [404 Not Found, 1.17kB, 6ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+↳ JSON mal formado (400)
+  POST http://localhost:3000/api/v1/viviendas [400 Bad Request, 1.17kB, 6ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │               118 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │               118 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │               119 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │               258 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 4.7s                                       │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 38.8kB (approx)                           │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 22ms [min: 2ms, max: 169ms, s.d.: 29ms] │
+└────────────────────────────────────────────────────────────────┘

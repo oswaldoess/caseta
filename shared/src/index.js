@@ -6,4 +6,5 @@ module.exports = {
   ...require("./mysqlErrores"),
   ...require("./internos"),
   ...require("./salud"),
+  ...require("./autorizacion"),
 };

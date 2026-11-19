@@ -1,0 +1,284 @@
+Caseta · Entrega 6 · Flujo completo de negocio (salida real de la terminal)
+Base reiniciada con npm run db:crear; todas las peticiones pasan por el API Gateway (puerto 3000).
+Fecha de la prueba: 2026-11-18. Los tokens se recortan con … para que se lean.
+
+=== 1. El residente inicia sesión (E01)
+$ POST /sesiones   (token: ninguno)
+{
+  "correo": "carlos.ramirez@correo.com",
+  "contrasena": "Caseta2026!"
+}
+
+HTTP/1.1 201 Created
+{
+  "token": "eyJhbGciOiJI…",
+  "tipo": "Bearer",
+  "expiraEn": 28800,
+  "usuario": {
+    "id": 5,
+    "nombreCompleto": "Carlos Ramírez Soto",
+    "rol": "residente"
+  }
+}
+
+=== 2. El residente registra una visita (E17). La vivienda sale del token: Visitas la pide a Viviendas (I03) y pregunta a Reglas por el adeudo (I04)
+$ POST /visitas   (token: residente)
+{
+  "tipo": "unica",
+  "nombreVisitante": "Laura Méndez Ríos",
+  "placas": "umr-482-b",
+  "numeroPersonas": 6,
+  "fecha": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45"
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/visitas/12
+{
+  "id": 12,
+  "tipo": "unica",
+  "estado": "activa",
+  "codigo": "AMDVQSXN",
+  "viviendaId": 1,
+  "domicilio": "Av. de los Fresnos 214",
+  "residenteId": 5,
+  "nombreVisitante": "Laura Méndez Ríos",
+  "placas": "UMR-482-B",
+  "numeroPersonas": 6,
+  "fechaInicio": "2026-11-18",
+  "fechaFin": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45",
+  "diasSemana": [],
+  "autorizadoPor": null,
+  "tieneEntradas": false,
+  "creadaEn": "2026-11-18T18:45:49-06:00",
+  "actualizadaEn": "2026-11-18T18:45:49-06:00"
+}
+
+=== 3. El guardia inicia sesión (E01)
+$ POST /sesiones   (token: ninguno)
+{
+  "correo": "miguel.torres@correo.com",
+  "contrasena": "Caseta2026!"
+}
+
+HTTP/1.1 201 Created
+{
+  "token": "eyJhbGciOiJI…",
+  "tipo": "Bearer",
+  "expiraEn": 28800,
+  "usuario": {
+    "id": 2,
+    "nombreCompleto": "Miguel Ángel Torres Ruiz",
+    "rol": "guardia"
+  }
+}
+
+=== 4. El sistema valida permisos: el guardia no puede registrar visitas (403)
+$ POST /visitas   (token: guardia)
+{
+  "tipo": "unica",
+  "nombreVisitante": "Laura Méndez Ríos",
+  "numeroPersonas": 6,
+  "fecha": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45"
+}
+
+HTTP/1.1 403 Forbidden
+{
+  "error": {
+    "codigo": "SIN_PERMISO",
+    "mensaje": "Tu rol no tiene permiso para realizar esta operación.",
+    "estado": 403,
+    "detalles": [],
+    "ruta": "/api/v1/visitas",
+    "fecha": "2026-11-18T18:45:50-06:00",
+    "idSolicitud": "req_ccf9a249"
+  }
+}
+
+=== 5. El guardia valida el código en la caseta (E21). Accesos consulta a Visitas (I06) y la tolerancia en Reglas (I05)
+$ GET /codigos/AMDVQSXN/validez   (token: guardia)
+
+HTTP/1.1 200 OK
+{
+  "codigo": "AMDVQSXN",
+  "valido": true,
+  "motivo": null,
+  "mensaje": "Acceso permitido.",
+  "visita": {
+    "id": 12,
+    "tipo": "unica",
+    "nombreVisitante": "Laura Méndez Ríos",
+    "numeroPersonas": 6,
+    "domicilio": "Av. de los Fresnos 214",
+    "horaInicio": "17:45",
+    "horaFin": "20:45"
+  },
+  "consultadoEn": "2026-11-18T18:45:50-06:00"
+}
+
+=== 6. El guardia registra la entrada (E22): inserta el acceso y registra el uso del código en Visitas (I07) en una transacción
+$ POST /accesos   (token: guardia)
+{
+  "codigo": "AMDVQSXN",
+  "observaciones": "Llegó en auto gris."
+}
+
+HTTP/1.1 201 Created
+location: /api/v1/accesos/9
+{
+  "id": 9,
+  "visitaId": 12,
+  "tipoVisita": "unica",
+  "nombreVisitante": "Laura Méndez Ríos",
+  "numeroPersonas": 6,
+  "viviendaId": 1,
+  "domicilio": "Av. de los Fresnos 214",
+  "residenteId": 5,
+  "entrada": "2026-11-18T18:45:50-06:00",
+  "guardiaEntradaId": 2,
+  "salida": null,
+  "guardiaSalidaId": null,
+  "observaciones": "Llegó en auto gris."
+}
+
+=== 7. Información relacionada: la visita quedó utilizada y con entrada (E18)
+$ GET /visitas/12   (token: residente)
+
+HTTP/1.1 200 OK
+{
+  "id": 12,
+  "tipo": "unica",
+  "estado": "utilizada",
+  "codigo": "AMDVQSXN",
+  "viviendaId": 1,
+  "domicilio": "Av. de los Fresnos 214",
+  "residenteId": 5,
+  "nombreVisitante": "Laura Méndez Ríos",
+  "placas": "UMR-482-B",
+  "numeroPersonas": 6,
+  "fechaInicio": "2026-11-18",
+  "fechaFin": "2026-11-18",
+  "horaInicio": "17:45",
+  "horaFin": "20:45",
+  "diasSemana": [],
+  "autorizadoPor": null,
+  "tieneEntradas": true,
+  "creadaEn": "2026-11-18T18:45:49-06:00",
+  "actualizadaEn": "2026-11-18T18:45:50-06:00"
+}
+
+=== 8. El residente consulta quién está dentro de su vivienda (E23)
+$ GET /accesos?dentro=true&limite=5   (token: residente)
+
+HTTP/1.1 200 OK
+{
+  "datos": [
+    {
+      "id": 9,
+      "visitaId": 12,
+      "tipoVisita": "unica",
+      "nombreVisitante": "Laura Méndez Ríos",
+      "numeroPersonas": 6,
+      "viviendaId": 1,
+      "domicilio": "Av. de los Fresnos 214",
+      "residenteId": 5,
+      "entrada": "2026-11-18T18:45:50-06:00",
+      "guardiaEntradaId": 2,
+      "salida": null,
+      "guardiaSalidaId": null,
+      "observaciones": "Llegó en auto gris."
+    },
+    {
+      "id": 8,
+      "visitaId": 9,
+      "tipoVisita": "unica",
+      "nombreVisitante": "Mariana López Ávila",
+      "numeroPersonas": 2,
+      "viviendaId": 1,
+      "domicilio": "Av. de los Fresnos 214",
+      "residenteId": 6,
+      "entrada": "2026-10-27T17:15:42-06:00",
+      "guardiaEntradaId": 3,
+      "salida": null,
+      "guardiaSalidaId": null,
+      "observaciones": null
+    }
+  ],
+  "paginacion": {
+    "pagina": 1,
+    "limite": 5,
+    "total": 2,
+    "totalPaginas": 1
+  }
+}
+
+=== 9. El guardia registra la salida (E25)
+$ POST /accesos/9/salida   (token: guardia)
+{
+  "observaciones": "Salió a pie."
+}
+
+HTTP/1.1 201 Created
+{
+  "id": 9,
+  "visitaId": 12,
+  "tipoVisita": "unica",
+  "nombreVisitante": "Laura Méndez Ríos",
+  "numeroPersonas": 6,
+  "viviendaId": 1,
+  "domicilio": "Av. de los Fresnos 214",
+  "residenteId": 5,
+  "entrada": "2026-11-18T18:45:50-06:00",
+  "guardiaEntradaId": 2,
+  "salida": "2026-11-18T18:45:50-06:00",
+  "guardiaSalidaId": 2,
+  "observaciones": "Llegó en auto gris. | Salió a pie."
+}
+
+=== 10. El mismo código ya no sirve: las visitas únicas permiten una sola entrada (422)
+$ POST /accesos   (token: guardia)
+{
+  "codigo": "AMDVQSXN"
+}
+
+HTTP/1.1 422 Unprocessable Entity
+{
+  "error": {
+    "codigo": "CODIGO_NO_VALIDO",
+    "mensaje": "El código AMDVQSXN no es válido: El código ya se utilizó; las visitas únicas solo permiten una entrada.",
+    "estado": 422,
+    "detalles": [
+      {
+        "campo": "codigo",
+        "mensaje": "motivo: ya_utilizado"
+      }
+    ],
+    "ruta": "/api/v1/accesos",
+    "fecha": "2026-11-18T18:45:50-06:00",
+    "idSolicitud": "req_c70f5799"
+  }
+}
+
+=== 11. Persistencia: lo que quedó en MySQL, consultado con el usuario de cada servicio
+$ mysql -u caseta_visitas -p -e "SELECT id, codigo, estado FROM caseta.visitas WHERE id = 12; SELECT visita_id, acceso_id FROM caseta.visita_usos WHERE visita_id = 12"
++----+----------+-----------+
+| id | codigo   | estado    |
++----+----------+-----------+
+| 12 | AMDVQSXN | utilizada |
++----+----------+-----------+
++-----------+-----------+
+| visita_id | acceso_id |
++-----------+-----------+
+|        12 |         9 |
++-----------+-----------+
+$ mysql -u caseta_accesos -p -e "SELECT id, visita_id, entrada, salida, guardia_entrada_id FROM caseta.accesos WHERE id = 9"
++----+-----------+---------------------+---------------------+--------------------+
+| id | visita_id | entrada             | salida              | guardia_entrada_id |
++----+-----------+---------------------+---------------------+--------------------+
+|  9 |        12 | 2026-11-18 18:45:50 | 2026-11-18 18:45:50 |                  2 |
++----+-----------+---------------------+---------------------+--------------------+

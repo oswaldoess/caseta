@@ -18,7 +18,7 @@ async function crear(req, res) {
 
 async function actualizar(req, res) {
   const { usuarioId } = datosValidados(req, ["params"]);
-  res.json(await servicio.actualizar(usuarioId, datosValidados(req, ["body"])));
+  res.json(await servicio.actualizar(usuarioId, datosValidados(req, ["body"]), req.usuario));
 }
 
 async function resumenInterno(req, res) {

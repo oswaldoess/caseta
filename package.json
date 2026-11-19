@@ -1,6 +1,6 @@
 {
   "name": "caseta",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Caseta: sistema de control de visitas para fraccionamientos privados (proyecto integrador de Arquitectura Orientada a Servicios, UPSRJ).",
   "workspaces": [
