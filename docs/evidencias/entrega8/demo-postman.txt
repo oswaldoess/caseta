@@ -1,0 +1,164 @@
+Caseta · Entrega 8 · Demo final en Postman (salida real de newman)
+Fecha: 2026-11-25 12:46 (hora de la Ciudad de México). Base recién creada con npm run db:crear; servicios levantados con npm start.
+$ npx newman run docs/postman/Caseta_Demo_Final.postman_collection.json
+
+
+Caseta - Demo final (Entrega 8)
+
+❏ 1. Inicio de sesión
+↳ E33 El sistema está arriba (público)
+  GET http://localhost:3000/api/v1/health [200 OK, 1.07kB, 27ms]
+  ✓  Responde 200
+  ✓  Los cinco servicios responden
+
+↳ E01 Inicia sesión la administradora
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.26kB, 85ms]
+  ✓  Responde 201
+  ✓  Guarda el token
+  ✓  Nunca devuelve la contraseña
+
+↳ E01 Inicia sesión el residente Carlos (vivienda 1)
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.25kB, 87ms]
+  ✓  Responde 201
+  ✓  Guarda el token
+  ✓  Nunca devuelve la contraseña
+
+↳ E01 Inicia sesión el guardia Miguel
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.25kB, 77ms]
+  ✓  Responde 201
+  ✓  Guarda el token
+  ✓  Nunca devuelve la contraseña
+
+↳ E01 Inicia sesión Fernando (vivienda 2, con adeudo)
+  POST http://localhost:3000/api/v1/sesiones [201 Created, 1.25kB, 74ms]
+  ✓  Responde 201
+  ✓  Guarda el token
+  ✓  Nunca devuelve la contraseña
+
+↳ Error E01 contraseña incorrecta (401)
+  POST http://localhost:3000/api/v1/sesiones [401 Unauthorized, 1.11kB, 73ms]
+  ✓  Responde 401
+  ✓  Error con formato estándar: CREDENCIALES_INVALIDAS
+
+❏ 2. CRUD de viviendas (administradora)
+↳ E10 Crear una vivienda
+  POST http://localhost:3000/api/v1/viviendas [201 Created, 1.14kB, 23ms]
+  ✓  Responde 201
+  ✓  Guarda el id
+
+↳ E11 Consultar la vivienda
+  GET http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.11kB, 9ms]
+  ✓  Responde 200
+  ✓  Es la vivienda creada
+
+↳ E12 Modificar la referencia
+  PATCH http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.12kB, 11ms]
+  ✓  Responde 200
+  ✓  Cambió la referencia
+
+↳ E09 Buscar viviendas
+  GET http://localhost:3000/api/v1/viviendas?q=demo&pagina=1&limite=10 [200 OK, 1.2kB, 11ms]
+  ✓  Responde 200
+  ✓  Aparece en la búsqueda
+
+↳ E12 Dar de baja la vivienda (baja lógica)
+  PATCH http://localhost:3000/api/v1/viviendas/7 [200 OK, 1.12kB, 10ms]
+  ✓  Responde 200
+  ✓  Queda desactivada
+
+↳ Error E10 vivienda duplicada (409)
+  POST http://localhost:3000/api/v1/viviendas [409 Conflict, 1.1kB, 8ms]
+  ✓  Responde 409
+  ✓  Error con formato estándar: VIVIENDA_DUPLICADA
+
+❏ 3. Flujo principal: de la visita a la salida
+↳ E17 El residente registra una visita (genera el código)
+  POST http://localhost:3000/api/v1/visitas [201 Created, 1.35kB, 54ms]
+  ✓  Responde 201
+  ✓  Devuelve un código de 8 caracteres
+
+↳ E21 El guardia valida el código
+  GET http://localhost:3000/api/v1/codigos/7XN3SVAW/validez [200 OK, 1.17kB, 38ms]
+  ✓  Responde 200
+  ✓  El código es válido
+
+↳ E22 El guardia registra la entrada
+  POST http://localhost:3000/api/v1/accesos [201 Created, 1.22kB, 31ms]
+  ✓  Responde 201
+  ✓  Guarda el id del acceso
+
+↳ E23 El residente ve quién sigue dentro de su casa
+  GET http://localhost:3000/api/v1/accesos?dentro=true&limite=50 [200 OK, 1.55kB, 17ms]
+  ✓  Responde 200
+  ✓  La visita aparece dentro
+
+↳ E25 El guardia registra la salida
+  POST http://localhost:3000/api/v1/accesos/9/salida [201 Created, 1.21kB, 11ms]
+  ✓  Responde 201
+  ✓  Tiene hora de salida
+
+❏ 4. Reglas de negocio
+↳ RN04 El mismo código ya no sirve (visita única usada)
+  GET http://localhost:3000/api/v1/codigos/7XN3SVAW/validez [200 OK, 1.24kB, 13ms]
+  ✓  Responde 200
+  ✓  Motivo ya_utilizado
+
+↳ RN03 Vivienda con adeudo: 20 personas superan el límite (422)
+  POST http://localhost:3000/api/v1/visitas [422 Unprocessable Entity, 1.28kB, 20ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: LIMITE_PERSONAS_EXCEDIDO
+
+❏ 5. Control de permisos
+↳ Sin token no se entra (401)
+  GET http://localhost:3000/api/v1/visitas [401 Unauthorized, 1.15kB, 3ms]
+  ✓  Responde 401
+  ✓  Error con formato estándar: TOKEN_INVALIDO
+
+↳ Un residente no puede crear usuarios (403)
+  POST http://localhost:3000/api/v1/usuarios [403 Forbidden, 1.1kB, 6ms]
+  ✓  Responde 403
+  ✓  Error con formato estándar: SIN_PERMISO
+
+↳ Un residente no ve una vivienda ajena (404)
+  GET http://localhost:3000/api/v1/viviendas/3 [404 Not Found, 1.09kB, 6ms]
+  ✓  Responde 404
+  ✓  Error con formato estándar: RECURSO_NO_ENCONTRADO
+
+❏ 6. Manejo de un error real
+↳ E22 Registrar otra vez la entrada con el código usado (422)
+  POST http://localhost:3000/api/v1/accesos [422 Unprocessable Entity, 1.22kB, 14ms]
+  ✓  Responde 422
+  ✓  Error con formato estándar: CODIGO_NO_VALIDO
+  ✓  El mensaje es claro y en español
+
+↳ E17 Datos inválidos: el sistema dice qué campo falla (400)
+  POST http://localhost:3000/api/v1/visitas [400 Bad Request, 1.31kB, 6ms]
+  ✓  Responde 400
+  ✓  Error con formato estándar: VALIDACION_FALLIDA
+  ✓  Lista los campos con error
+
+❏ 7. Persistencia en la base de datos
+↳ E24 La administradora consulta el acceso guardado
+  GET http://localhost:3000/api/v1/accesos/9 [200 OK, 1.2kB, 8ms]
+  ✓  Responde 200
+  ✓  Tiene entrada y salida guardadas
+
+┌─────────────────────────┬──────────────────┬──────────────────┐
+│                         │         executed │           failed │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              iterations │                1 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│                requests │               25 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│            test-scripts │               25 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│      prerequest-scripts │               25 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              assertions │               56 │                0 │
+├─────────────────────────┴──────────────────┴──────────────────┤
+│ total run duration: 1145ms                                    │
+├───────────────────────────────────────────────────────────────┤
+│ total data received: 7.85kB (approx)                          │
+├───────────────────────────────────────────────────────────────┤
+│ average response time: 28ms [min: 3ms, max: 87ms, s.d.: 27ms] │
+└───────────────────────────────────────────────────────────────┘

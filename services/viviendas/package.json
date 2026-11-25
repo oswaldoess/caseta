@@ -1,6 +1,6 @@
 {
   "name": "@caseta/viviendas",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "private": true,
   "description": "S2. Viviendas: viviendas y asignación de residentes.",
   "main": "src/index.js",

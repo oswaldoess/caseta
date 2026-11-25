@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Caseta API
-  version: 1.0.0-entrega7
+  version: 1.0.0
   description: |-
     API pública de Caseta, sistema de control de visitas para fraccionamientos privados. Todas las peticiones entran por el API Gateway en http://localhost:3000/api/v1.
 

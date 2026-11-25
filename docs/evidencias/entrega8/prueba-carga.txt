@@ -1,0 +1,26 @@
+Caseta · Entrega 8 · Prueba de carga RNF04 (salida real de la terminal)
+Fecha: 2026-11-25 12:45. Máquina de 2 núcleos con MySQL, los seis procesos y el generador de carga juntos.
+$ npm run prueba:carga
+Prueba de carga · GET http://localhost:3000/api/v1/codigos/6DRBHVC5/validez
+Rol guardia · 2026-11-25T18:45:46.715Z · Node v22.23.4
+Fase 1 · 20 rondas de 50 peticiones simultáneas
+  Peticiones                      1000
+  Peticiones por segundo          215
+  Latencia promedio (ms)          166
+  Latencia p50 (ms)               173
+  Latencia p95 (ms)               249
+  Latencia p99 (ms)               299
+  Latencia máxima (ms)            325
+  Respuestas 200 con valido=true  1000
+  Errores o respuestas distintas  0
+Fase 2 · 50 clientes sin pausa durante 15 s
+  Peticiones                      5737
+  Peticiones por segundo          381
+  Latencia promedio (ms)          131
+  Latencia p50 (ms)               119
+  Latencia p95 (ms)               216
+  Latencia p99 (ms)               296
+  Latencia máxima (ms)            391
+  Respuestas 200 con valido=true  5737
+  Errores o respuestas distintas  0
+RNF04 (p99 < 1000 ms y sin errores en ambas fases): CUMPLE
