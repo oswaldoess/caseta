@@ -45,3 +45,16 @@ La prueba de carga se corrió en una máquina de 2 núcleos con MySQL, los seis 
 ## Datos de prueba
 
 Las pruebas usan las cuentas de `database/02_datos_prueba.sql` (contraseña `Caseta2026!`). Cada prueba crea sus propias visitas con nombres y horarios calculados en la hora de México, así que se pueden repetir sin reiniciar la base. Las que modifican datos compartidos (desactivar una cuenta, cambiar una contraseña) los dejan como estaban al terminar.
+
+## Corrida final (Entrega 8)
+
+Se repitieron todas las pruebas el 25 de noviembre de 2026 sobre la versión 1.0.0, con la base recién creada.
+
+| Prueba | Resultado | Evidencia |
+|---|---|---|
+| `npm test` | 10 archivos, 121 pruebas, 121 aprobadas | `docs/evidencias/entrega8/pruebas-npm-test.txt` |
+| Demo final (Postman) | 25 peticiones, 56 verificaciones, 0 fallas | `docs/evidencias/entrega8/demo-postman.txt` |
+| Regresión (Postman) | 118 peticiones, 258 verificaciones, 0 fallas | `docs/evidencias/entrega8/regresion-postman.txt` |
+| Carga (RNF04) | 50 simultáneas: p99 = 299 ms; 50 clientes sostenidos 15 s: 381 peticiones/s, p99 = 296 ms; 0 errores. Cumple. | `docs/evidencias/entrega8/prueba-carga.txt` |
+| Servicio caído (RNF06) | Con Reglas detenido: `/health` y las rutas que lo necesitan responden 503 sin guardar nada; los demás servicios siguen respondiendo. | `docs/evidencias/entrega8/servicio-caido-503.txt` |
+| Respaldo de la base | `caseta_respaldo.sql` se restauró en una base vacía y las 26 pruebas de restricciones salieron rechazadas. | `database/respaldo/` |

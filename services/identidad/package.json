@@ -1,6 +1,6 @@
 {
   "name": "@caseta/identidad",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "private": true,
   "description": "S1. Identidad: usuarios, roles, sesiones y tokens.",
   "main": "src/index.js",

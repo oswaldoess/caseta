@@ -47,3 +47,20 @@ Todas las tablas están en la base `caseta`, pero cada una tiene un solo servici
 - Dentro de un servicio las relaciones usan `FOREIGN KEY`.
 - Entre servicios no hay llaves foráneas: la tabla guarda solo el id (referencia lógica) y el servicio dueño lo valida con su ruta interna (`/internal/v1`).
 - El diagrama entidad-relación está en `docs/diagramas/modelo-er.png`.
+
+## Respaldo de la base de datos
+
+`respaldo/caseta_respaldo.sql` es un respaldo completo de la base `caseta` (estructura y datos de prueba), generado con `mysqldump` justo después de `npm run db:crear`. Sirve para restaurar la base sin correr los scripts uno por uno:
+
+```bash
+mysql -u root -p < database/respaldo/caseta_respaldo.sql
+mysql -u root -p < database/04_usuarios_servicios.sql   # los usuarios de MySQL no van en el respaldo
+```
+
+En MySQL Workbench: Server → Data Import → Import from Self-Contained File, elegir `caseta_respaldo.sql` y luego ejecutar `04_usuarios_servicios.sql`.
+
+Para generar un respaldo nuevo de la base con los datos actuales:
+
+```bash
+mysqldump -u root -p --databases caseta --single-transaction --set-gtid-purged=OFF --no-tablespaces > caseta_respaldo.sql
+```

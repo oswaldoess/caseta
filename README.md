@@ -4,6 +4,8 @@ Sistema de control de visitas para fraccionamientos privados. Proyecto integrado
 
 El residente registra a su visita con anticipación y el sistema genera un código; el guardia lo valida en la caseta y registra la entrada y la salida; la administración consulta el historial y aplica el reglamento.
 
+**Versión final: 1.0.0 (Entrega 8).** Diagrama de arquitectura final: `docs/diagramas/arquitectura-final.png`.
+
 ## Equipo
 
 - María Fernanda Barrientos Mancilla
@@ -79,6 +81,10 @@ npm run prueba:carga      # RNF04: 50 peticiones simultáneas a GET /codigos/{co
 ```
 
 Las pruebas de integración necesitan la base creada con `npm run db:crear` y usan las cuentas de prueba. El plan, los casos y los resultados están en `docs/pruebas.md`.
+
+### Demo final (Entrega 8)
+
+`docs/postman/Caseta_Demo_Final.postman_collection.json` tiene 25 peticiones en el orden de la demostración mínima: inicio de sesión, CRUD de viviendas, flujo completo de una visita, reglas de negocio, permisos, manejo de errores y persistencia. Con los servicios levantados y la base recién creada, se corre con **Run collection** o con `npx newman run docs/postman/Caseta_Demo_Final.postman_collection.json`. El guion de la demo y las respuestas para la defensa están en `docs/demo-final.md`.
 
 ### Probar con Postman
 
@@ -200,10 +206,19 @@ Solo el puerto 3000 (gateway) debe quedar abierto hacia fuera; los puertos 3001 
 - Especificación de la API: `docs/api/openapi.yaml`, también en Swagger UI en http://localhost:3000/api/docs (con los servicios corriendo) o en https://editor.swagger.io.
 - Plan y resultados de pruebas: `docs/pruebas.md`. Seguridad: `docs/seguridad.md`. Defectos: `docs/defectos.md`. Reglas de negocio: `docs/reglas-negocio.md`.
 - Documentos de cada entrega: `docs/entregas/`.
-- Diagramas: `docs/diagramas/` (arquitectura, modelo de dominio, flujo de registrar una entrada y modelo entidad-relación).
-- Scripts de la base de datos: `database/`.
-- Colección de Postman: `docs/postman/`.
+- Diagramas: `docs/diagramas/` (arquitectura final, arquitectura de la Entrega 3, modelo de dominio, flujo de registrar una entrada y modelo entidad-relación).
+- Scripts de la base de datos: `database/`. Respaldo completo: `database/respaldo/caseta_respaldo.sql`.
+- Colecciones de Postman: `docs/postman/` (regresión completa y demo final).
+- Guion de la demo y de la defensa: `docs/demo-final.md`. Retrospectiva del equipo: `docs/retrospectiva.md`.
 - Evidencias de ejecución de cada entrega: `docs/evidencias/`.
+
+## Limitaciones conocidas
+
+- No hay interfaz gráfica: el sistema se usa por la API (Postman o Swagger UI).
+- RNF09 pedía levantar todo con Docker Compose; se cambió por `npm run db:crear` y `npm run dev`.
+- El límite de intentos de inicio de sesión vive en la memoria de Identidad; con varias instancias habría que moverlo a Redis.
+- Sin HTTPS ni gestor de secretos en local (ver `docs/seguridad.md`).
+- Los servicios comparten un mismo servidor MySQL (con un usuario por servicio), no un servidor por servicio.
 
 ## Cómo trabajamos en el repositorio
 
@@ -223,4 +238,4 @@ Solo el puerto 3000 (gateway) debe quedar abierto hacia fuera; los puertos 3001 
 | 5 | MVP Backend I | Entregada |
 | 6 | MVP Backend II e integración | Entregada |
 | 7 | Pruebas, seguridad, documentación y despliegue | Entregada |
-| 8 | Entrega final | Pendiente |
+| 8 | Entrega final y defensa | Entregada (`v1.0-entrega8`) |

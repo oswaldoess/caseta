@@ -1,6 +1,6 @@
 {
   "name": "@caseta/reglas",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "private": true,
   "description": "S5. Reglas y Adeudos: adeudos y parámetros del reglamento.",
   "main": "src/index.js",

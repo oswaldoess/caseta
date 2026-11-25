@@ -1,0 +1,1284 @@
+{
+  "info": {
+    "name": "Caseta - Demo final (Entrega 8)",
+    "description": "Demostración mínima de la Entrega 8, en orden: inicio de sesión, CRUD, flujo principal, reglas de negocio, permisos, manejo de errores y persistencia. Correr con los servicios levantados (npm run dev) y la base recién creada (npm run db:crear).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Fecha y horario de hoy en la Ciudad de México (UTC-6), para que la visita sea válida al momento de la demo.",
+          "const d = new Date(Date.now() - 6 * 60 * 60 * 1000);",
+          "const dos = (n) => String(n).padStart(2, \"0\");",
+          "const hhmm = (m) => { m = Math.max(0, Math.min(23 * 60 + 59, m)); return dos(Math.floor(m / 60)) + \":\" + dos(m % 60); };",
+          "const minutos = d.getUTCHours() * 60 + d.getUTCMinutes();",
+          "pm.collectionVariables.set(\"hoy\", d.toISOString().slice(0, 10));",
+          "pm.collectionVariables.set(\"horaInicio\", hhmm(minutos - 60));",
+          "pm.collectionVariables.set(\"horaFin\", hhmm(minutos + 120));",
+          "if (!pm.collectionVariables.get(\"sufijo\")) pm.collectionVariables.set(\"sufijo\", String(Date.now()).slice(-6));"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Inicio de sesión",
+      "item": [
+        {
+          "name": "E33 El sistema está arriba (público)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Los cinco servicios responden\", () => { const s = pm.response.json(); pm.expect(s.estado).to.eql(\"ok\"); pm.expect(Object.keys(s.servicios)).to.have.lengthOf(5); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E01 Inicia sesión la administradora",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sesiones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sesiones"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"patricia.gomez@correo.com\",\n  \"contrasena\": \"Caseta2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Guarda el token\", () => { const s = pm.response.json(); pm.expect(s.token.split(\".\")).to.have.lengthOf(3); pm.collectionVariables.set(\"tokenAdmin\", s.token); });",
+                  "pm.test(\"Nunca devuelve la contraseña\", () => pm.expect(pm.response.text()).to.not.include(\"$2b$\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E01 Inicia sesión el residente Carlos (vivienda 1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sesiones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sesiones"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"carlos.ramirez@correo.com\",\n  \"contrasena\": \"Caseta2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Guarda el token\", () => { const s = pm.response.json(); pm.expect(s.token.split(\".\")).to.have.lengthOf(3); pm.collectionVariables.set(\"tokenResidente\", s.token); });",
+                  "pm.test(\"Nunca devuelve la contraseña\", () => pm.expect(pm.response.text()).to.not.include(\"$2b$\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E01 Inicia sesión el guardia Miguel",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sesiones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sesiones"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"miguel.torres@correo.com\",\n  \"contrasena\": \"Caseta2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Guarda el token\", () => { const s = pm.response.json(); pm.expect(s.token.split(\".\")).to.have.lengthOf(3); pm.collectionVariables.set(\"tokenGuardia\", s.token); });",
+                  "pm.test(\"Nunca devuelve la contraseña\", () => pm.expect(pm.response.text()).to.not.include(\"$2b$\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E01 Inicia sesión Fernando (vivienda 2, con adeudo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sesiones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sesiones"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"fernando.ortega@correo.com\",\n  \"contrasena\": \"Caseta2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Guarda el token\", () => { const s = pm.response.json(); pm.expect(s.token.split(\".\")).to.have.lengthOf(3); pm.collectionVariables.set(\"tokenAdeudo\", s.token); });",
+                  "pm.test(\"Nunca devuelve la contraseña\", () => pm.expect(pm.response.text()).to.not.include(\"$2b$\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Error E01 contraseña incorrecta (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/sesiones",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "sesiones"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"carlos.ramirez@correo.com\",\n  \"contrasena\": \"otraContrasena1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error con formato estándar: CREDENCIALES_INVALIDAS\", () => pm.expect(pm.response.json().error.codigo).to.eql(\"CREDENCIALES_INVALIDAS\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. CRUD de viviendas (administradora)",
+      "item": [
+        {
+          "name": "E10 Crear una vivienda",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/viviendas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "viviendas"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"calle\": \"Calle Demo\",\n  \"numero\": \"{{sufijo}}\",\n  \"referencia\": \"Manzana 9, lote 1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Guarda el id\", () => pm.collectionVariables.set(\"viviendaId\", pm.response.json().id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E11 Consultar la vivienda",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/viviendas/{{viviendaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "viviendas",
+                "{{viviendaId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Es la vivienda creada\", () => pm.expect(pm.response.json().calle).to.eql(\"Calle Demo\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E12 Modificar la referencia",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/viviendas/{{viviendaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "viviendas",
+                "{{viviendaId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referencia\": \"Manzana 9, lote 1, casa esquina\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Cambió la referencia\", () => pm.expect(pm.response.json().referencia).to.include(\"esquina\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E09 Buscar viviendas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/viviendas?q=demo&pagina=1&limite=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "viviendas"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "demo"
+                },
+                {
+                  "key": "pagina",
+                  "value": "1"
+                },
+                {
+                  "key": "limite",
+                  "value": "10"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Aparece en la búsqueda\", () => pm.expect(pm.response.json().datos.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E12 Dar de baja la vivienda (baja lógica)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/viviendas/{{viviendaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "viviendas",
+                "{{viviendaId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"activa\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Queda desactivada\", () => pm.expect(pm.response.json().activa).to.eql(false));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Error E10 vivienda duplicada (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/viviendas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "viviendas"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"calle\": \"Av. de los Fresnos\",\n  \"numero\": \"214\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Error con formato estándar: VIVIENDA_DUPLICADA\", () => pm.expect(pm.response.json().error.codigo).to.eql(\"VIVIENDA_DUPLICADA\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Flujo principal: de la visita a la salida",
+      "item": [
+        {
+          "name": "E17 El residente registra una visita (genera el código)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/visitas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visitas"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenResidente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"unica\",\n  \"nombreVisitante\": \"Laura Méndez Ríos\",\n  \"placas\": \"umr-482-b\",\n  \"numeroPersonas\": 3,\n  \"fecha\": \"{{hoy}}\",\n  \"horaInicio\": \"{{horaInicio}}\",\n  \"horaFin\": \"{{horaFin}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Devuelve un código de 8 caracteres\", () => { const v = pm.response.json(); pm.expect(v.codigo).to.match(/^[A-HJ-NP-Z2-9]{8}$/); pm.collectionVariables.set(\"codigo\", v.codigo); pm.collectionVariables.set(\"visitaId\", v.id); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E21 El guardia valida el código",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/codigos/{{codigo}}/validez",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "codigos",
+                "{{codigo}}",
+                "validez"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenGuardia}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"El código es válido\", () => pm.expect(pm.response.json().valido).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E22 El guardia registra la entrada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accesos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accesos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenGuardia}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{codigo}}\",\n  \"observaciones\": \"Llegó en auto gris.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Guarda el id del acceso\", () => pm.collectionVariables.set(\"accesoId\", pm.response.json().id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E23 El residente ve quién sigue dentro de su casa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accesos?dentro=true&limite=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accesos"
+              ],
+              "query": [
+                {
+                  "key": "dentro",
+                  "value": "true"
+                },
+                {
+                  "key": "limite",
+                  "value": "50"
+                }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenResidente}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"La visita aparece dentro\", () => pm.expect(pm.response.json().datos.map((a) => a.id)).to.include(Number(pm.collectionVariables.get(\"accesoId\"))));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E25 El guardia registra la salida",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accesos/{{accesoId}}/salida",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accesos",
+                "{{accesoId}}",
+                "salida"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenGuardia}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Tiene hora de salida\", () => pm.expect(pm.response.json().salida).to.be.a(\"string\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Reglas de negocio",
+      "item": [
+        {
+          "name": "RN04 El mismo código ya no sirve (visita única usada)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/codigos/{{codigo}}/validez",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "codigos",
+                "{{codigo}}",
+                "validez"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenGuardia}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Motivo ya_utilizado\", () => { const v = pm.response.json(); pm.expect(v.valido).to.eql(false); pm.expect(v.motivo).to.eql(\"ya_utilizado\"); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "RN03 Vivienda con adeudo: 20 personas superan el límite (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/visitas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visitas"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdeudo}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"unica\",\n  \"nombreVisitante\": \"Fiesta de cumpleaños\",\n  \"numeroPersonas\": 20,\n  \"fecha\": \"{{hoy}}\",\n  \"horaInicio\": \"{{horaInicio}}\",\n  \"horaFin\": \"{{horaFin}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error con formato estándar: LIMITE_PERSONAS_EXCEDIDO\", () => pm.expect(pm.response.json().error.codigo).to.eql(\"LIMITE_PERSONAS_EXCEDIDO\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Control de permisos",
+      "item": [
+        {
+          "name": "Sin token no se entra (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/visitas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visitas"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Error con formato estándar: TOKEN_INVALIDO\", () => pm.expect(pm.response.json().error.codigo).to.eql(\"TOKEN_INVALIDO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Un residente no puede crear usuarios (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "usuarios"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenResidente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Intruso Prueba\",\n  \"correo\": \"intruso@correo.com\",\n  \"telefono\": \"4425550000\",\n  \"rol\": \"administrador\",\n  \"contrasena\": \"Caseta2026!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"Error con formato estándar: SIN_PERMISO\", () => pm.expect(pm.response.json().error.codigo).to.eql(\"SIN_PERMISO\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Un residente no ve una vivienda ajena (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/viviendas/3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "viviendas",
+                "3"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenResidente}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Error con formato estándar: RECURSO_NO_ENCONTRADO\", () => pm.expect(pm.response.json().error.codigo).to.eql(\"RECURSO_NO_ENCONTRADO\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Manejo de un error real",
+      "item": [
+        {
+          "name": "E22 Registrar otra vez la entrada con el código usado (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/accesos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accesos"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenGuardia}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"{{codigo}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 422\", () => pm.response.to.have.status(422));",
+                  "pm.test(\"Error con formato estándar: CODIGO_NO_VALIDO\", () => pm.expect(pm.response.json().error.codigo).to.eql(\"CODIGO_NO_VALIDO\"));",
+                  "pm.test(\"El mensaje es claro y en español\", () => pm.expect(pm.response.json().error.mensaje).to.be.a(\"string\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "E17 Datos inválidos: el sistema dice qué campo falla (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/visitas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visitas"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenResidente}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo\": \"unica\",\n  \"nombreVisitante\": \"Al\",\n  \"numeroPersonas\": 50,\n  \"fecha\": \"2020-01-01\",\n  \"horaInicio\": \"20:00\",\n  \"horaFin\": \"18:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Error con formato estándar: VALIDACION_FALLIDA\", () => pm.expect(pm.response.json().error.codigo).to.eql(\"VALIDACION_FALLIDA\"));",
+                  "pm.test(\"Lista los campos con error\", () => pm.expect(pm.response.json().error.detalles.length).to.be.above(1));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Persistencia en la base de datos",
+      "item": [
+        {
+          "name": "E24 La administradora consulta el acceso guardado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/accesos/{{accesoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "accesos",
+                "{{accesoId}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{tokenAdmin}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "description": "Para mostrarlo directo en MySQL Workbench:\n\nSELECT id, nombre_visitante, entrada, salida FROM caseta.accesos ORDER BY id DESC LIMIT 5;"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Responde 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Tiene entrada y salida guardadas\", () => { const a = pm.response.json(); pm.expect(a.entrada).to.be.a(\"string\"); pm.expect(a.salida).to.be.a(\"string\"); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "tokenAdmin",
+      "value": ""
+    },
+    {
+      "key": "tokenResidente",
+      "value": ""
+    },
+    {
+      "key": "tokenGuardia",
+      "value": ""
+    },
+    {
+      "key": "tokenAdeudo",
+      "value": ""
+    },
+    {
+      "key": "hoy",
+      "value": ""
+    },
+    {
+      "key": "horaInicio",
+      "value": ""
+    },
+    {
+      "key": "horaFin",
+      "value": ""
+    },
+    {
+      "key": "sufijo",
+      "value": ""
+    },
+    {
+      "key": "viviendaId",
+      "value": ""
+    },
+    {
+      "key": "codigo",
+      "value": ""
+    },
+    {
+      "key": "visitaId",
+      "value": ""
+    },
+    {
+      "key": "accesoId",
+      "value": ""
+    }
+  ]
+}
